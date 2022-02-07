@@ -93,7 +93,7 @@ fi
 
 if [ ! -d "${STEAM_COMPAT_DATA_PATH}" ]; then
     info "Creating '${STEAM_COMPAT_DATA_PATH}'"
-    mkdir "${STEAM_COMPAT_DATA_PATH}"
+    mkdir -p "${STEAM_COMPAT_DATA_PATH}"
 fi
 
 # Launch proton
@@ -101,4 +101,4 @@ command="${1}"
 shift
 params=${*}
 info "Starting Steam Proton with command '${command}'"
-"${proton}" runinprefix "${command}" $params
+"${proton}" run "${command}"
