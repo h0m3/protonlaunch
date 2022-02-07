@@ -97,6 +97,8 @@ if [ ! -d "${STEAM_COMPAT_DATA_PATH}" ]; then
 fi
 
 # Launch proton
-command="${*}"
+command="${1}"
+shift
+params=${*}
 info "Starting Steam Proton with command '${command}'"
-"${proton}" run "${command}"
+"${proton}" runinprefix "${command}" $params

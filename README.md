@@ -8,23 +8,30 @@ A small piece of script to launch Proton directly from the CLI similar to Wine, 
 
 ## Requirements
 
-- [Linux](https://kernel.org/st) version 3 or newer
-- [Steam](https://store.steampowered.com/) (latest revision)
+- [Linux](https://kernel.org/) version 3 or newer
+- [Steam](https://store.steampowered.com/) latest revision
 - [Bash](https://www.gnu.org/software/bash/) version 4 or newer
+- [curl](https://curl.se/) (only needed for automatic installation)
 
 ## Enable Steam Play Compatibility
 
 You need to enable Steam Play Compatibility Layer (proton) for all games.
 
-For that, open Steam and go to **Steam > Settings > Steam Play > Advanced** and check *"Enable Steam Play for all other titles"*
+For that, open Steam and go to **Steam > Settings > Steam Play > Advanced** and check *Enable Steam Play for all other titles*
 
 ## Install Proton on Steam
 
 Go on **Library** and in the Search Bar type *proton*, you should see all available Proton versions, install the ones that you want to use. I recommend the latest non-experimental one.
 
-## Install protonlaunch
+## Single line automatic installation
 
-> I need to make a one-liner copy-and-paste way of installing protonlaunch, but that's not ready ;)
+Just copy and paste to install protonlaunch to your `/usr/local/bin`
+
+```bash
+curl -O https://raw.githubusercontent.com/h0m3/protonlaunch/main/protonlaunch; sudo mv ./protonlaunch /usr/local/bin/protonlaunch; sudo chmod +x /usr/local/bin/protonlaunch
+```
+
+## Manual Installation
 
 Download a zip file of this project, extract it in a folder then move 'protonlaunch' to a executable path of your system like `/usr/local/bin`:
 
