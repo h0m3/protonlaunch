@@ -24,6 +24,9 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
+# Protonlaunch IS NOT associated with Valve Software. Steam, Valve and Proton
+# are developed by and trademarks of of Valve Software.
+#
 
 # Show message logs
 function info() {
