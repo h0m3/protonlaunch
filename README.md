@@ -2,6 +2,8 @@
 
 A small piece of script to launch Proton directly from the CLI similar to Wine, it also allows you to set custom proton prefixes instead of Steam default ones
 
+![Protonlaunch running Winecfg](https://raw.githubusercontent.com/h0m3/protonlaunch/main/screenshot.png)
+
 # installation
 
 ## Requirements
@@ -12,7 +14,7 @@ A small piece of script to launch Proton directly from the CLI similar to Wine, 
 
 ## Enable Steam Play Compatibility
 
-You need to enable Steam Play Compatibility Layer (proton) for all games, for that
+You need to enable Steam Play Compatibility Layer (proton) for all games.
 
 For that, open Steam and go to **Steam > Settings > Steam Play > Advanced** and check *"Enable Steam Play for all other titles"*
 
