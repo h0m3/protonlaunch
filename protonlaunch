@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Script that allows calling Steam instance of proton directly
+# Copyright 2022 Artur 'h0m3' Paiva <dr.hoome@gmail.com>
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are met:
+#
+# 1. Redistributions of source code must retain the above copyright notice, this
+#    list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above copyright notice,
+#    this list of conditions and the following disclaimer in the documentation
+#    and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIEDi
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
+
+# Show message logs
+function info() {
+    echo ":: INFO: ${1}"
+}
+
+# Raise an error and terminate the application
+function error() {
+    echo ":: ERROR: ${1}"
+    exit 1
+}
+
+# Finding Steam
+if [ -z "${_STEAM_PATH}" ] && [ -z ${STEAM_COMPAT_CLIENT_INSTALL_PATH} ]; then
+    if [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
+        STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.local/share/Steam"
+    elif [ -h "${HOME}/.steam/steam" ]; then
+        STEAM_COMPAT_CLIENT_INSTALL_PATH="$(readlink ${HOME}/.steam/steam)"
+    else
+        error "Unable to find Steam path, please set STEAM_PATH"
+    fi
+    info "Steam found at '${STEAM_COMPAT_CLIENT_INSTALL_PATH}'"
+fi
+
+# Finding Steam library
+if [ -z "${_STEAM_LIBRARY_PATH}" ]; then
+    if [ -d "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/steamapps/common" ]; then
+        info "Using '${STEAM_COMPAT_CLIENT_INSTALL_PATH}' as library path"
+        STEAM_LIBRARY_PATH="${STEAM_COMPAT_CLIENT_INSTALL_PATH}"
+    else
+        error "Unable to find Steam library, make sure that Proton is installed and set STEAM_LIBRARY_PATH if necessary"
+    fi
+fi
+
+# # Set WINEPREFIX or PROTONPREFIX
+# if [ -z "${STEAM_COMPAT_DATA_PATH}" ]; then
+#     if [ ! -z "${WINEPREFIX}" ]; then
+#         STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
+#     elif [ ! -z "${SPROTONPREFIX}" ]; then
+#         STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
+#     else
+#         STEAM_COMPAT_DATA_PATH="${HOME}/.proton"
+#     fi
+# fi
