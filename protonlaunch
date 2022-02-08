@@ -107,4 +107,10 @@ command="${1}"
 shift
 params=${*}
 info "Starting Steam Proton with command '${command}'"
-"${proton}" runinprefix "${command}" ${params}
+
+# Starts with 'runinprefix' only if there is parameters
+if [ -z "${params}" ]; then
+    "${proton}" run "${command}"
+else
+    "${proton}" runinprefix "${command}" ${params}
+fi
