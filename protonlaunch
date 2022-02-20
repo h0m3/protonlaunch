@@ -96,9 +96,21 @@ if [ ! -d "${STEAM_COMPAT_DATA_PATH}" ]; then
     mkdir -p "${STEAM_COMPAT_DATA_PATH}"
 fi
 
+# Bootstrap prefix
+if [ ! -d "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c" ]; then
+    info "Bootstrapping '${STEAM_COMPAT_DATA_PATH}'"
+    "${proton}" run wineboot
+fi
+
 # Launch proton
 command="${1}"
 shift
 params=${*}
 info "Starting Steam Proton with command '${command}'"
-"${proton}" run "${command}"
+
+# Starts with 'runinprefix' only if there is parameters
+if [ -z "${params}" ]; then
+    "${proton}" run "${command}"
+else
+    "${proton}" runinprefix "${command}" ${params}
+fi
