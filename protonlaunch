@@ -65,10 +65,17 @@ fi
 
 # Getting Proton version
 if [ -z "${_PROTON_VERSION}" ]; then
-    if ! ls "${_STEAM_LIBRARY_PATH}/steamapps/common" | grep -i proton 2>&1 > /dev/null; then
+    proton_selection="$(ls -1r "${_STEAM_LIBRARY_PATH}/steamapps/common" | grep -i proton 2> /dev/null)"
+    if [ "$?" != "0" ]; then
         error "Unable to find Proton on '${_STEAM_LIBRARY_PATH}', make sure proton is installed and set _PROTON_VERSION if necessary"
     fi
-    _PROTON_VERSION="$(ls "${_STEAM_LIBRARY_PATH}/steamapps/common" | grep -i proton | head -n 1)"
+
+    if [ "$(echo "${proton_selection}" | head -n 1)" == "Proton - Experimental" ]; then
+        _PROTON_VERSION="$(echo "${proton_selection}" | head -n 2 | tail -n 1)"
+    else
+        _PROTON_VERSION="$(echo "${proton_selection}" | head -n 1)"
+    fi
+
     info "Using proton '${_PROTON_VERSION}'"
 fi
 
