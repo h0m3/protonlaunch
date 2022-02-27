@@ -58,8 +58,8 @@ function usage() {
     echo "Usage: ${0} [option] program [arguments...]"
     echo
     echo "Options:"
-    echo -e "\t--help\t\tDisplay this message and exit"
-    echo -e "\t--version\tDisplay version and exit"
+    echo -e "\t-h, --help\t\tDisplay this message and exit"
+    echo -e "\t-v, --version\tDisplay version and exit"
     echo
     echo "Environment Variables:"
     echo -e "\tSTEAM_COMPAT_CLIENT_INSTALL_PATH"
@@ -204,7 +204,9 @@ if [ -z "${1}" ]; then
 fi
 
 case ${1} in
+    "-h") usage; exit 0;;
     "--help") usage; exit 0;;
+    "-v") version; exit 0;;
     "--version") version; exit 0;;
 esac
 
