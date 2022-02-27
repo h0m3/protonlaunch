@@ -33,7 +33,7 @@
 
 
 # Version string
-VERSION="0.3"
+VERSION="0.4"
 
 # Get program name
 PROGRAM_NAME="${0}"
