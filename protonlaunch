@@ -33,7 +33,7 @@
 
 
 # Version string
-VERSION="0.4"
+VERSION="0.5"
 
 # Get program name
 PROGRAM_NAME="${0}"
@@ -219,7 +219,7 @@ info "Steam installation path is '${STEAM_COMPAT_CLIENT_INSTALL_PATH}'"
 if [ -z ${_STEAM_LIBRARY_PATH} ]; then
     get_steam_library
 fi
-info "Steam librart path is '${_STEAM_LIBRARY_PATH}'"
+info "Steam library path is '${_STEAM_LIBRARY_PATH}'"
 
 if [ -z "${_PROTON_VERSION}" ]; then
     get_proton_version
