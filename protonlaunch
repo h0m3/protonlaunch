@@ -1,123 +1,243 @@
 #!/usr/bin/env bash
-# Script that allows calling Steam instance of proton directly
-# Copyright 2022 Artur 'h0m3' Paiva <dr.hoome@gmail.com>
+# Copyright (c) 2022, Artur 'h0m3' Paiva <dr.hoome@gmail.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
 #
-# 1. Redistributions of source code must retain the above copyright notice, this
-#    list of conditions and the following disclaimer.
+# * Redistributions of source code must retain the above copyright notice, this
+#   list of conditions and the following disclaimer.
 #
-# 2. Redistributions in binary form must reproduce the above copyright notice,
-#    this list of conditions and the following disclaimer in the documentation
-#    and/or other materials provided with the distribution.
+# * Redistributions in binary form must reproduce the above copyright notice,
+#   this list of conditions and the following disclaimer in the documentation
+#   and/or other materials provided with the distribution.
 #
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
-# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIEDi
-# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR
-# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
-# (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
-# LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
-# (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
-# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# * Neither the name of [project] nor the names of its
+#   contributors may be used to endorse or promote products derived from
+#   this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+# DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+# SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+# CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+# OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+# OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # Protonlaunch IS NOT associated with Valve Software. Steam, Valve and Proton
 # are developed by and trademarks of of Valve Software.
 #
 
+
+# Version string
+VERSION="0.5"
+
+# Get program name
+PROGRAM_NAME="${0}"
+PROGRAM_NAME="$(basename "$(echo "${PROGRAM_NAME}")")"
+
+
 # Show message logs
 function info() {
-    echo ":: INFO: ${1}"
+    echo "${PROGRAM_NAME}: ${1}" >&1
 }
+
 
 # Raise an error and terminate the application
 function error() {
-    echo ":: ERROR: ${1}"
+    echo "${PROGRAM_NAME}: Error: ${1}" >&2
     exit 1
 }
 
-# Finding Steam
-if [ -z ${STEAM_COMPAT_CLIENT_INSTALL_PATH} ]; then
-    if [ -e "${_STEAM_PATH}/steam.sh" ]; then
+
+# Show a usage message
+function usage() {
+    echo "Usage: ${0} [option] program [arguments...]"
+    echo
+    echo "Options:"
+    echo -e "\t-h, --help\t\tDisplay this message and exit"
+    echo -e "\t-v, --version\tDisplay version and exit"
+    echo
+    echo "Environment Variables:"
+    echo -e "\tSTEAM_COMPAT_CLIENT_INSTALL_PATH"
+    echo -e "\t\tPath to Steam installation user files (usually \$HOME/.local/share/Steam)"
+    echo
+    echo -e "\t_STEAM_PATH"
+    echo -e "\t\tSame as STEAM_COMPAT_CLIENT_INSTALL_PATH. STEAM_COMPAT_CLIENT_INSTALL_PATH have priority"
+    echo
+    echo -e "\t_STEAM_LIBRARY_PATH"
+    echo -e "\t\tPath to Steam Library folder (Default is \$STEAM_COMPAT_CLIENT_INSTALL_PATH)"
+    echo
+    echo -e "\t_PROTON_VERSION"
+    echo -e "\t\tVersion of proton to use, same name as the 'proton folder' under steamapps/common. If ommited Protonlaunch will try to use the latest non experimental"
+    echo
+    echo -e "\tSTEAM_COMPAT_DATA_PATH"
+    echo -e "\t\tPath to proton prefix. (Default is \$HOME/.proton)"
+    echo
+    echo -e "\tWINEPREFIX"
+    echo -e "\t\tSame as STEAM_COMPAT_DATA_PATH. STEAM_COMPAT_DATA_PATH have priority"
+    echo
+    echo -e "\tPROTONPREFIX"
+    echo -e "\t\tSame as STEAM_COMPAT_DATA_PATH. STEAM_COMPAT_DATA_PATH have priority"
+    echo
+}
+
+
+# Show a version message
+function version() {
+    echo "ProtonLaunch version ${VERSION}"
+    /usr/bin/env bash --version | head -n 1
+    echo "Protonlaunch is licensed under BSD 3-Clause License <https://opensource.org/licenses/BSD-3-Clause>"
+
+    echo
+    echo "This is free software; you are free to change and redistribute it."
+    echo "There is NO WARRANTY, to the extent permitted by law."
+}
+
+
+# Find Steam installation path
+function get_steam_path() {
+    if [ ! -z ${_STEAM_PATH} ]; then
         export STEAM_COMPAT_CLIENT_INSTALL_PATH="${_STEAM_PATH}"
-    elif [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
+        return
+    fi
+
+    if [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
         export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.local/share/Steam"
-    elif [ -h "${HOME}/.steam/steam" ]; then
-        export STEAM_COMPAT_CLIENT_INSTALL_PATH="$(readlink ${HOME}/.steam/steam)"
-    else
-        error "Unable to find Steam path, please set _STEAM_PATH"
+        return
     fi
-    info "Steam found at '${STEAM_COMPAT_CLIENT_INSTALL_PATH}'"
-fi
 
-# Finding Steam library
-if [ -z "${_STEAM_LIBRARY_PATH}" ]; then
+    if [ -h "${HOME}/.steam/steam" ]; then
+        path="$(readlink ${HOME}/.steam/steam)"
+        if [ -e "${path}/steam.sh" ]; then
+            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${path}"
+            return
+        fi
+    fi
+
+    error "Unable to find Steam path, please set _STEAM_PATH"
+}
+
+
+# Find Steam library path
+function get_steam_library() {
     if [ -d "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/steamapps/common" ]; then
-        info "Using '${STEAM_COMPAT_CLIENT_INSTALL_PATH}' as library path"
-        _STEAM_LIBRARY_PATH="${STEAM_COMPAT_CLIENT_INSTALL_PATH}"
-    else
-        error "Unable to find Steam library, make sure that Proton is installed and set _STEAM_LIBRARY_PATH if necessary"
+        export _STEAM_LIBRARY_PATH="${STEAM_COMPAT_CLIENT_INSTALL_PATH}"
+        return
     fi
-fi
 
-# Getting Proton version
-if [ -z "${_PROTON_VERSION}" ]; then
-    proton_selection="$(ls -1r "${_STEAM_LIBRARY_PATH}/steamapps/common" | grep -i proton 2> /dev/null)"
-    if [ "$?" != "0" ]; then
+    error "Unable to find Steam library, make sure that Proton is installed and set _STEAM_LIBRARY_PATH if necessary"
+}
+
+
+# Get proton version
+function get_proton_version() {
+    library_path="${_STEAM_LIBRARY_PATH}/steamapps/common"
+    if ! proton_list="$(ls -1r "${library_path}" 2> /dev/null | grep -i proton 2> /dev/null)"; then
         error "Unable to find Proton on '${_STEAM_LIBRARY_PATH}', make sure proton is installed and set _PROTON_VERSION if necessary"
     fi
 
-    if [ "$(echo "${proton_selection}" | head -n 1)" == "Proton - Experimental" ]; then
-        _PROTON_VERSION="$(echo "${proton_selection}" | head -n 2 | tail -n 1)"
+    if [ "$(echo "${proton_list}" | head -n 1)" == "Proton - Experimental" ]; then
+        export _PROTON_VERSION="$(echo "${proton_list}" | head -n 2 | tail -n 1)"
     else
-        _PROTON_VERSION="$(echo "${proton_selection}" | head -n 1)"
+        export _PROTON_VERSION="$(echo "${proton_list}" | head -n 1)"
+    fi
+}
+
+
+# Get proton exexcutable path
+function get_proton_path() {
+    if [ -e "${_STEAM_LIBRARY_PATH}/steamapps/common/${_PROTON_VERSION}/proton" ]; then
+        export proton="${_STEAM_LIBRARY_PATH}/steamapps/common/${_PROTON_VERSION}/proton"
+        return
     fi
 
-    info "Using proton '${_PROTON_VERSION}'"
-fi
-
-# Checking for proton
-if [ -e "${_STEAM_LIBRARY_PATH}/steamapps/common/${_PROTON_VERSION}/proton" ]; then
-    proton="${_STEAM_LIBRARY_PATH}/steamapps/common/${_PROTON_VERSION}/proton"
-else
     error "Unable to find Proton installation on '${_STEAM_LIBRARY_PATH}/steamapps/common/${_PROTON_VERSION}'"
-fi
+}
 
-# Set WINEPREFIX or PROTONPREFIX
-if [ -z "${STEAM_COMPAT_DATA_PATH}" ]; then
+
+# Get prefix path
+function get_prefix() {
     if [ ! -z "${WINEPREFIX}" ]; then
         export STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
-    elif [ ! -z "${PROTONPREFIX}" ]; then
-        export STEAM_COMPAT_DATA_PATH="${PROTONPREFIX}"
-    else
-        info "Using prefix '${HOME}/.proton'"
-        export STEAM_COMPAT_DATA_PATH="${HOME}/.proton"
+        return
     fi
-fi
 
-if [ ! -d "${STEAM_COMPAT_DATA_PATH}" ]; then
-    info "Creating '${STEAM_COMPAT_DATA_PATH}'"
-    mkdir -p "${STEAM_COMPAT_DATA_PATH}"
-fi
+    if [ ! -z "${PROTONPREFIX}" ]; then
+        export STEAM_COMPAT_DATA_PATH="${PROTONPREFIX}"
+        return
+    fi
+
+    export STEAM_COMPAT_DATA_PATH="${HOME}/.proton"
+}
+
 
 # Bootstrap prefix
-if [ ! -d "${STEAM_COMPAT_DATA_PATH}/pfx/drive_c" ]; then
-    info "Bootstrapping '${STEAM_COMPAT_DATA_PATH}'"
-    "${proton}" run wineboot
+function bootstrap() {
+    if [ ! -d "${1}/pfx/drive_c" ]; then
+        info "Bootstrapping '${1}'"
+        "${proton}" run wineboot
+    fi
+}
+
+# Run a program
+function run() {
+    command="${1}"
+    shift
+    params=${@}
+    info "Program is '${command}'"
+
+    if [ -z "${params}" ]; then
+        "${proton}" run "${command}"
+    else
+        "${proton}" runinprefix "${command}" ${params}
+    fi
+}
+
+
+# Manage launch options
+if [ -z "${1}" ]; then
+    error "Expecting a program name or aregument, try --help"
 fi
 
-# Launch proton
-command="${1}"
-shift
-params=${*}
-info "Starting Steam Proton with command '${command}'"
+case ${1} in
+    "-h") usage; exit 0;;
+    "--help") usage; exit 0;;
+    "-v") version; exit 0;;
+    "--version") version; exit 0;;
+esac
 
-# Starts with 'runinprefix' only if there is parameters
-if [ -z "${params}" ]; then
-    "${proton}" run "${command}"
-else
-    "${proton}" runinprefix "${command}" ${params}
+# Get variables
+if [ -z ${STEAM_COMPAT_CLIENT_INSTALL_PATH} ]; then
+    get_steam_path
 fi
+info "Steam installation path is '${STEAM_COMPAT_CLIENT_INSTALL_PATH}'"
+
+if [ -z ${_STEAM_LIBRARY_PATH} ]; then
+    get_steam_library
+fi
+info "Steam library path is '${_STEAM_LIBRARY_PATH}'"
+
+if [ -z "${_PROTON_VERSION}" ]; then
+    get_proton_version
+fi
+info "Proton version '${_PROTON_VERSION}'"
+
+get_proton_path
+
+get_prefix
+info "Prefix '${STEAM_COMPAT_DATA_PATH}'"
+
+# Create and bootstrap prefix
+if ! mkdir -pv "${STEAM_COMPAT_DATA_PATH}"; then
+    error "Failed to create prefix '${STEAM_COMPAT_DATA_PATH}'"
+fi
+if ! bootstrap "${STEAM_COMPAT_DATA_PATH}"; then
+    error "Failed to bootstrap '${STEAM_COMPAT_DATA_PATH}'"
+fi
+
+# Run proton
+run "${@}"
