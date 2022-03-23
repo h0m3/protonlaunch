@@ -8,10 +8,11 @@ A small piece of script to launch Proton directly from the CLI, similar to Wine.
 
 ## Requirements
 
-- [Linux](https://kernel.org/) version 3 or newer
-- [Steam](https://store.steampowered.com/) latest revision
-- [Bash](https://www.gnu.org/software/bash/) version 4 or newer
+- [Linux](https://kernel.org/)
+- [Steam](https://store.steampowered.com/)
+- [Bash](https://www.gnu.org/software/bash/)
 - [curl](https://curl.se/) (only needed for automatic installation)
+- [sudo](https://www.sudo.ws/) (only needed for automatic installation)
 
 ## Enable Steam Play Compatibility
 
