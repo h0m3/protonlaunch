@@ -218,6 +218,38 @@ function pl_gamemode() {
     fi
 }
 
+
+# Enable NVAPI / DLSS
+function pl_nvapi() {
+    if [ "${_NVAPI}" == "1" || "${_DLSS}" == "1" ]; then
+        export PROTON_ENABLE_NVAPI=1
+    fi
+}
+
+
+# Enable RayTracing
+function pl_dxr() {
+    if [ "${_DXR}" == "1" ]; then
+        if [ -z "${VKD3D_CONFIG}" ]; then
+            export VKD3D_CONFIG="dxr"
+        else
+            export VKD3D_CONFIG="${VKD3D_CONFIG}:dxr"
+        fi
+    fi
+}
+
+
+# Enable NVIDIA RayTracing
+function pl_rtx() {
+    if [ "${_RTX}" == "1" ]; then
+        export _NVAPI="1"
+        export _DXR="1"
+        pl_nvapi
+        pl_raytracing
+    fi
+}
+
+
 # Manage launch options
 if [ -z "${1}" ]; then
     pl_error "Expecting a program name or aregument, try --help"
@@ -260,6 +292,10 @@ if ! pl_bootstrap "${STEAM_COMPAT_DATA_PATH}"; then
 fi
 
 pl_mangohud
+pl_gamemode
+pl_nvapi
+pl_dxr
+pl_rtx
 
 # Run proton
 pl_run "${@}"
