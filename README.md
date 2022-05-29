@@ -1,6 +1,6 @@
 # ProtonLaunch
 
-A small piece of script to launch Proton directly from the CLI, similar to Wine. It also allows you to set custom proton prefixes instead of Steam default ones
+A small piece of script to launch Steam Proton instance directly from the CLI, similar to Wine. It also allows you to set custom proton prefixes instead of Steam default ones
 
 ![Protonlaunch running Winecfg](https://raw.githubusercontent.com/h0m3/protonlaunch/main/screenshot.png)
 
@@ -8,7 +8,6 @@ A small piece of script to launch Proton directly from the CLI, similar to Wine.
 
 ## Requirements
 
-- [Linux](https://kernel.org/)
 - [Steam](https://store.steampowered.com/)
 - [Bash](https://www.gnu.org/software/bash/)
 - [curl](https://curl.se/) (only needed for automatic installation)

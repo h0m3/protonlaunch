@@ -192,16 +192,19 @@ function pl_run() {
     pl_info "Program is '${command}'"
 
     if [ -z "${params}" ]; then
-        "${GAMEMODE_CMD}" "${MANGOHUD_CMD}" "${proton}" run "${command}"
+        pl_info "Running: ${GAMEMODE_CMD} ${MANGOHUD_CMD} \"${proton}\" run \"${command}\""
+        ${GAMEMODE_CMD} ${MANGOHUD_CMD} "${proton}" run "${command}"
     else
-        "${GAMEMODE_CMD}" "${MANGOHUD_CMD}" "${proton}" runinprefix "${command}" ${params}
+        pl_info "Running: ${GAMEMODE_CMD} ${MANGOHUD_CMD} \"${proton}\" runinprefix \"${command}\" ${params}"
+        ${GAMEMODE_CMD} ${MANGOHUD_CMD} "${proton}" runinprefix "${command}" ${params}
     fi
 }
 
 
 # Enable MangoHUD
 function pl_mangohud() {
-    if command -v mangohud && [ "${MANGOHUD}" == "1" ]; then
+    if command -v mangohud &> /dev/null && [ "${MANGOHUD}" == "1" ]; then
+        pl_info "MangoHUD enabled"
         export MANGOHUD_CMD="mangohud"
     else
         export MANGOHUD_CMD=""
@@ -211,7 +214,8 @@ function pl_mangohud() {
 
 # Enable GameMode
 function pl_gamemode() {
-    if command -v gamemoderun && [ "${_GAMEMODE}" == "1" ]; then
+    if command -v gamemoderun &> /dev/null && [ "${_GAMEMODE}" == "1" ]; then
+        pl_info "GameMode enabled"
         export GAMEMODE_CMD="gamemoderun"
     else
         export GAMEMODE_CMD=""
@@ -222,7 +226,8 @@ function pl_gamemode() {
 # Enable NVAPI / DLSS
 function pl_nvapi() {
     if [ -z "${PROTON_ENABLE_NVAPI}" ]; then
-        if [ "${_NVAPI}" == "1" || "${_DLSS}" == "1" ]; then
+        if [ "${_NVAPI}" == "1" ] || [ "${_DLSS}" == "1" ]; then
+            pl_info "NVAPI Enabled"
             export PROTON_ENABLE_NVAPI=1
         fi
     fi
@@ -232,6 +237,7 @@ function pl_nvapi() {
 # Enable RayTracing
 function pl_dxr() {
     if [ "${_DXR}" == "1" ]; then
+        pl_info "DirectX RayTracing Enabled"
         if [ -z "${VKD3D_CONFIG}" ]; then
             export VKD3D_CONFIG="dxr"
         else
@@ -247,7 +253,7 @@ function pl_rtx() {
         export _NVAPI="1"
         export _DXR="1"
         pl_nvapi
-        pl_raytracing
+        pl_dxr
     fi
 }
 
@@ -255,6 +261,7 @@ function pl_rtx() {
 # Enable frame capping
 function pl_framecap() {
     if [ ! -z "${_FRAMECAP}" ] && [ -z "${DXVK_FRAME_RATE}" ]; then
+        pl_info "Framerate capped at ${_FRAMECAP} FPS"
         export DXVK_FRAME_RATE="${_FRAMECAP}"
     fi
 }
@@ -263,6 +270,7 @@ function pl_framecap() {
 # Enable AMD FSR
 function pl_fsr() {
     if [ "${_FSR}" == "1" ] && [ -z "${WINE_FULLSCREEN_FSR}" ]; then
+        pl_info "AMD FSR Enabled"
         export WINE_FULLSCREEN_FSR=1
     fi
 }
@@ -315,6 +323,7 @@ pl_nvapi
 pl_dxr
 pl_rtx
 pl_framecap
+pl_fsr
 
 # Run proton
 pl_run "${@}"
