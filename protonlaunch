@@ -221,8 +221,10 @@ function pl_gamemode() {
 
 # Enable NVAPI / DLSS
 function pl_nvapi() {
-    if [ "${_NVAPI}" == "1" || "${_DLSS}" == "1" ]; then
-        export PROTON_ENABLE_NVAPI=1
+    if [ -z "${PROTON_ENABLE_NVAPI}" ]; then
+        if [ "${_NVAPI}" == "1" || "${_DLSS}" == "1" ]; then
+            export PROTON_ENABLE_NVAPI=1
+        fi
     fi
 }
 
@@ -254,6 +256,14 @@ function pl_rtx() {
 function pl_framecap() {
     if [ ! -z "${_FRAMECAP}" ] && [ -z "${DXVK_FRAME_RATE}" ]; then
         export DXVK_FRAME_RATE="${_FRAMECAP}"
+    fi
+}
+
+
+# Enable AMD FSR
+function pl_fsr() {
+    if [ "${_FSR}" == "1" ] && [ -z "${WINE_FULLSCREEN_FSR}" ]; then
+        export WINE_FULLSCREEN_FSR=1
     fi
 }
 
