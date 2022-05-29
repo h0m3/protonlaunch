@@ -183,6 +183,7 @@ function pl_bootstrap() {
     fi
 }
 
+
 # Run a program
 function pl_run() {
     command="${1}"
@@ -191,11 +192,12 @@ function pl_run() {
     pl_info "Program is '${command}'"
 
     if [ -z "${params}" ]; then
-        "${MANGOHUD_CMD}" "${proton}" run "${command}"
+        "${GAMEMODE_CMD}" "${MANGOHUD_CMD}" "${proton}" run "${command}"
     else
-        "${MANGOHUD_CMD}" "${proton}" runinprefix "${command}" ${params}
+        "${GAMEMODE_CMD}" "${MANGOHUD_CMD}" "${proton}" runinprefix "${command}" ${params}
     fi
 }
+
 
 # Enable MangoHUD
 function pl_mangohud() {
@@ -206,6 +208,15 @@ function pl_mangohud() {
     fi
 }
 
+
+# Enable GameMode
+function pl_gamemode() {
+    if command -v gamemoderun && [ "${_GAMEMODE}" == "1" ]; then
+        export GAMEMODE_CMD="gamemoderun"
+    else
+        export GAMEMODE_CMD=""
+    fi
+}
 
 # Manage launch options
 if [ -z "${1}" ]; then
