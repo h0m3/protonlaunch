@@ -62,11 +62,17 @@ function pl_usage() {
     echo -e "\t-v, --version\tDisplay version and exit"
     echo
     echo "Environment Variables:"
-    echo -e "\tSTEAM_COMPAT_CLIENT_INSTALL_PATH"
-    echo -e "\t\tPath to Steam installation user files (usually \$HOME/.local/share/Steam)"
+    echo -e "\tPROTONPREFIX"
+    echo -e "\t\tPath to proton prefix (Default is \$HOME/.proton). STEAM_COMPAT_DATA_PATH have priority"
+    echo
+    echo -e "\tWINEPREFIX"
+    echo -e "\t\tSame as PROTONPREFIX. STEAM_COMPAT_DATA_PATH have priority"
+    echo
+    echo -e "\tMANGOHUD"
+    echo -e "\t\tEnable MangoHUD <https://github.com/flightlessmango/MangoHud>"
     echo
     echo -e "\t_STEAM_PATH"
-    echo -e "\t\tSame as STEAM_COMPAT_CLIENT_INSTALL_PATH. STEAM_COMPAT_CLIENT_INSTALL_PATH have priority"
+    echo -e "\t\tPath to Steam installation user files (usually \$HOME/.local/share/Steam). STEAM_COMPAT_CLIENT_INSTALL_PATH have priority"
     echo
     echo -e "\t_STEAM_LIBRARY_PATH"
     echo -e "\t\tPath to Steam Library folder (Default is \$STEAM_COMPAT_CLIENT_INSTALL_PATH)"
@@ -74,14 +80,32 @@ function pl_usage() {
     echo -e "\t_PROTON_VERSION"
     echo -e "\t\tVersion of proton to use, same name as the 'proton folder' under steamapps/common. If ommited Protonlaunch will try to use the latest non experimental"
     echo
-    echo -e "\tSTEAM_COMPAT_DATA_PATH"
-    echo -e "\t\tPath to proton prefix. (Default is \$HOME/.proton)"
+    echo -e "\t_GAMEMODE"
+    echo -e "\t\tEnable GameMode <https://github.com/FeralInteractive/gamemode>"
     echo
-    echo -e "\tWINEPREFIX"
-    echo -e "\t\tSame as STEAM_COMPAT_DATA_PATH. STEAM_COMPAT_DATA_PATH have priority"
+    echo -e "\t_NVAPI"
+    echo -e "\t\tEnable NVAPI for supported games. This allows nvidia exclusives like DLSS for supported games. PROTON_ENABLE_NVAPI have priority"
+    echo -e "\t\tNote: This option may crash your game, not all games and GPUs are supported"
     echo
-    echo -e "\tPROTONPREFIX"
-    echo -e "\t\tSame as STEAM_COMPAT_DATA_PATH. STEAM_COMPAT_DATA_PATH have priority"
+    echo -e "\t_DLSS"
+    echo -e "\t\tSame as _NVAPI. PROTON_ENABLE_NVAPI have priority"
+    echo -e "\t\tNote: This option may crash your game, not all games and GPUs are supported"
+    echo
+    echo -e "\t_DXR"
+    echo -e "\t\tEnable VKD3D DirectX RayTracing for supported games."
+    echo -e "\t\tNote: For NVIDIA RTX cards you also need _NVAPI enabled"
+    echo -e "\t\tNote: This option may crash your game, not all games and GPUs are supported"
+    echo
+    echo -e "\t_RTX"
+    echo -e "\t\tEnable RayTracing for NVIDIA RTX cards. This replaces _DXR _NVAPI. PROTON_ENABLE_NVAPI have priority"
+    echo -e "\t\tNote: This option may crash your game, not all games and GPUs are supported"
+    echo
+    echo -e "\t_FRAMECAP"
+    echo -e "\t\tDXVK FPS capping. DXVK_FRAME_RATE have priority"
+    echo
+    echo -e "\t_FSR"
+    echo -e "\t\tEnable AMD FSR for supported games. WINE_FULLSCREEN_FSR have priority"
+    echo -e "\t\tNote: This option may crash your game, not all games and GPUs are supported"
     echo
 }
 
