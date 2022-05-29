@@ -191,9 +191,18 @@ function pl_run() {
     pl_info "Program is '${command}'"
 
     if [ -z "${params}" ]; then
-        "${proton}" run "${command}"
+        "${MANGOHUD_CMD}" "${proton}" run "${command}"
     else
-        "${proton}" runinprefix "${command}" ${params}
+        "${MANGOHUD_CMD}" "${proton}" runinprefix "${command}" ${params}
+    fi
+}
+
+# Enable MangoHUD
+function pl_mangohud() {
+    if command -v mangohud && [ "${MANGOHUD}" == "1" ]; then
+        export MANGOHUD_CMD="mangohud"
+    else
+        export MANGOHUD_CMD=""
     fi
 }
 
@@ -238,6 +247,8 @@ fi
 if ! pl_bootstrap "${STEAM_COMPAT_DATA_PATH}"; then
     pl_error "Failed to bootstrap '${STEAM_COMPAT_DATA_PATH}'"
 fi
+
+pl_mangohud
 
 # Run proton
 pl_run "${@}"
