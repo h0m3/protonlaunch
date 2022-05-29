@@ -250,6 +250,14 @@ function pl_rtx() {
 }
 
 
+# Enable frame capping
+function pl_framecap() {
+    if [ ! -z "${_FRAMECAP}" ] && [ -z "${DXVK_FRAME_RATE}" ]; then
+        export DXVK_FRAME_RATE="${_FRAMECAP}"
+    fi
+}
+
+
 # Manage launch options
 if [ -z "${1}" ]; then
     pl_error "Expecting a program name or aregument, try --help"
@@ -296,6 +304,7 @@ pl_gamemode
 pl_nvapi
 pl_dxr
 pl_rtx
+pl_framecap
 
 # Run proton
 pl_run "${@}"
