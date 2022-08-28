@@ -182,14 +182,34 @@ function pl_get_steam_path() {
 }
 
 
-# Find Steam library path
+# Add a path to the steam library paths
+function pl_add_library_path() {
+    if [ -z ${PL_LIBRARY_PATH} ]; then
+        export PL_LIBRARY_PATH="${1}"
+    else
+        export PL_LIBRARY_PATH="${PL_LIBRARY_PATH}:${1}"
+    fi
+}
+
+
+# Find Steam library paths
 function pl_get_steam_library() {
-    if [ -d "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/steamapps/common" ]; then
-        export _STEAM_LIBRARY_PATH="${STEAM_COMPAT_CLIENT_INSTALL_PATH}"
-        return
+    if [ -f "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/config/libraryfolders.vdf" ]; then
+        pl_paths="$(grep -i path "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/config/libraryfolders.vdf")"
+        while read pl_path
+            if [ -d "${pl_path}/stemapps/common" ]; then
+                pl_add_library_path "${pl_path}"
+            fi
+        done <<< "${pl_paths}"
     fi
 
-    pl_error "Unable to find Steam library, make sure that Proton is installed and set _STEAM_LIBRARY_PATH if necessary"
+    if [ -z "${PL_LIBRARY_PATH}" ]; then
+        if [ -d "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/steamapps/common" ]; then
+            pl_add_library_path "${STEAM_COMPAT_CLIENT_INSTALL_PATH}"
+        else
+            pl_error "Unable to find Steam library, make sure that Proton is installed and set _STEAM_LIBRARY_PATH if necessary"
+        fi
+    fi
 }
 
 
