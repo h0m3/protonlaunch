@@ -41,17 +41,17 @@ PROGRAM_NAME="$(basename "$(echo "${0}")")"
 
 # Show message logs
 function pl_info() {
-    echo "${PROGRAM_NAME}: ${1}" >&1
+    echo "${pl_bold}${pl_blue}${PROGRAM_NAME}:${pl_normal} ${1}" >&1
 }
 
 # Show a warning message
 function pl_warning() {
-    echo "${PROGRAM_NAME}: Warning: ${1}" >&1
+    echo "${pl_bold}${pl_yellow}${PROGRAM_NAME}: Warning:${pl_normal} ${1}" >&1
 }
 
 # Raise an error and terminate the application
 function pl_error() {
-    echo "${PROGRAM_NAME}: Error: ${1}" >&2
+    echo "${pl_bold}${pl_red}${PROGRAM_NAME}: Error:${pl_normal} ${1}" >&2
     exit 1
 }
 
@@ -124,33 +124,50 @@ function pl_version() {
 }
 
 
-# Set color information
+# Set colors if supported
 function pl_set_color() {
-    if [ -z ${PL_NO_COLORS} ]; then
-
+    ncolors="$(tput colors)"
+    if [ -z ${PL_NO_COLORS} ] && [ -t 1 ] && [ -n ${ncolors} ] && [ $(tput colors) -ge 8 ]; then
+        export pl_bold="$(tput bold)"
+        export pl_underline="$(tput smul)"
+        export pl_standout="$(tput smso)"
+        export pl_normal="$(tput sgr0)"
+        export pl_black="$(tput setaf 0)"
+        export pl_red="$(tput setaf 1)"
+        export pl_green="$(tput setaf 2)"
+        export pl_yellow="$(tput setaf 3)"
+        export pl_blue="$(tput setaf 4)"
+        export pl_magenta="$(tput setaf 5)"
+        export pl_cyan="$(tput setaf 6)"
+        export pl_white="$(tput setaf 7)"
+    fi
 }
 
 # Find Steam installation path
 function pl_get_steam_path() {
-    if [ ! -z ${_STEAM_PATH} ]; then
-        export STEAM_COMPAT_CLIENT_INSTALL_PATH="${_STEAM_PATH}"
-        return
-    fi
+    if [ -z ${STEAM+STEAM_COMPAT_CLIENT_INSTALL_PATH} ]; then
 
-    if [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
-        export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.local/share/Steam"
-        return
-    fi
-
-    if [ -h "${HOME}/.steam/steam" ]; then
-        path="$(readlink ${HOME}/.steam/steam)"
-        if [ -e "${path}/steam.sh" ]; then
-            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${path}"
+        if [ ! -z ${PL_STEAM_PATH} ]; then
+            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${PL_STEAM_PATH}"
             return
         fi
-    fi
 
-    pl_error "Unable to find Steam path, please set _STEAM_PATH"
+        if [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
+            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.local/share/Steam"
+            return
+        fi
+
+        if [ -h "${HOME}/.steam/steam" ]; then
+            path="$(readlink ${HOME}/.steam/steam)"
+            if [ -e "${path}/steam.sh" ]; then
+                export STEAM_COMPAT_CLIENT_INSTALL_PATH="${path}"
+                return
+            fi
+        fi
+
+        pl_error "Unable to find Steam path, please set PL_STEAM_PATH"
+
+    fi
 }
 
 
