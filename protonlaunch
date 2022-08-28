@@ -12,7 +12,7 @@
 #   this list of conditions and the following disclaimer in the documentation
 #   and/or other materials provided with the distribution.
 #
-# * Neither the name of [project] nor the names of its
+# * Neither the name of protonlaunch nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
 #
@@ -33,11 +33,10 @@
 
 
 # Version string
-VERSION="0.6"
+VERSION="0.7"
 
 # Get program name
-PROGRAM_NAME="${0}"
-PROGRAM_NAME="$(basename "$(echo "${PROGRAM_NAME}")")"
+PROGRAM_NAME="$(basename "$(echo "${0}")")"
 
 
 # Show message logs
@@ -45,6 +44,10 @@ function pl_info() {
     echo "${PROGRAM_NAME}: ${1}" >&1
 }
 
+# Show a warning message
+function pl_warning() {
+    echo "${PROGRAM_NAME}: Warning: ${1}" >&1
+}
 
 # Raise an error and terminate the application
 function pl_error() {
@@ -113,7 +116,6 @@ function pl_usage() {
 # Show a version message
 function pl_version() {
     echo "ProtonLaunch version ${VERSION}"
-    /usr/bin/env bash --version | head -n 1
     echo "Protonlaunch is licensed under BSD 3-Clause License <https://opensource.org/licenses/BSD-3-Clause>"
 
     echo
@@ -121,6 +123,12 @@ function pl_version() {
     echo "There is NO WARRANTY, to the extent permitted by law."
 }
 
+
+# Set color information
+function pl_set_color() {
+    if [ -z ${PL_NO_COLORS} ]; then
+
+}
 
 # Find Steam installation path
 function pl_get_steam_path() {
