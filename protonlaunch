@@ -143,17 +143,28 @@ function pl_set_color() {
     fi
 }
 
+
 # Find Steam installation path
 function pl_get_steam_path() {
-    if [ -z ${STEAM+STEAM_COMPAT_CLIENT_INSTALL_PATH} ]; then
+    if [ -z ${STEAM_COMPAT_CLIENT_INSTALL_PATH} ]; then
 
         if [ ! -z ${PL_STEAM_PATH} ]; then
             export STEAM_COMPAT_CLIENT_INSTALL_PATH="${PL_STEAM_PATH}"
             return
         fi
 
-        if [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
+        if [ -d "${HOME}/.local/share/Steam" ] && [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
             export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.local/share/Steam"
+            return
+        fi
+
+        if [ -d "${HOME}/.steam/steam" ] && [ -e "${HOME}/.steam/steam/steam.sh" ]; then
+            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/steam"
+            return
+        fi
+
+        if [ -d "${HOME}/.steam/debian-installaton" ] && [ -e "${HOME}/.steam/debian-installation/steam.sh" ]; then
+            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/debian-installation"
             return
         fi
 
