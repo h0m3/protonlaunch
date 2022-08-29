@@ -416,17 +416,19 @@ pl_fsr() {
 
 # Run a program
 pl_run() {
-    command="${1}"
+    pl_command="${1}"
     shift
-    params=${@}
-    pl_info "Program is '${command}'"
+    pl_params=${@}
+    pl_info "Program is '${pl_command}'"
 
-    if [ -z "${params}" ]; then
-        pl_debug "Running: ${GAMEMODE_CMD} ${MANGOHUD_CMD} \"${proton}\" run \"${command}\""
-        ${GAMEMODE_CMD} ${MANGOHUD_CMD} "${pl_proton}" run "${command}"
+    if [ -z "${pl_params}" ]; then
+        pl_debug "using 'run' since theres no parameters"
+        pl_debug "Running: \"${pl_proton}\" run \"${pl_command}\""
+        "${pl_proton}" run "${pl_command}"
     else
-        pl_debug "Running: ${GAMEMODE_CMD} ${MANGOHUD_CMD} \"${proton}\" runinprefix \"${command}\" ${params}"
-        ${GAMEMODE_CMD} ${MANGOHUD_CMD} "${pl_proton}" runinprefix "${command}" ${params}
+        pl_debug "using 'runinprefix' since there is paramenters"
+        pl_debug "Running: \"${pl_proton}\" runinprefix \"${pl_command}\" ${pl_params}"
+        "${pl_proton}" runinprefix "${pl_command}" ${pl_params}
     fi
 }
 

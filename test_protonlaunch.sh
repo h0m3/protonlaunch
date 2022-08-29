@@ -8,6 +8,7 @@ bash ./protonlaunch ${@}
 
 echo -e "\n\t:: zsh"
 zsh ./protonlaunch ${@}
+zsh -y ./protonlaunch ${@}
 
 echo -e "\n\t:: dash"
 dash ./protonlaunch ${@}
