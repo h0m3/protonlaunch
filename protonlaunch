@@ -41,24 +41,24 @@ PROGRAM_NAME="$(basename "$(echo "${0}")")"
 
 # Show message logs
 pl_info() {
-    echo "${pl_bold}${pl_blue}${PROGRAM_NAME}:${pl_normal} ${1}" >&1
+    echo "${pl_bold}${pl_blue}${PROGRAM_NAME}:${pl_normal} ${1}" > /dev/stdout
 }
 
 # Show a warning message
 pl_warning() {
-    echo "${pl_bold}${pl_yellow}${PROGRAM_NAME}: Warning:${pl_normal} ${1}" >&1
+    echo "${pl_bold}${pl_yellow}${PROGRAM_NAME}:${pl_normal} Warning: ${1}" > /dev/stderr
 }
 
 # Raise an error and terminate the application
 pl_error() {
-    echo "${pl_bold}${pl_red}${PROGRAM_NAME}: Error:${pl_normal} ${1}" >&2
+    echo "${pl_bold}${pl_red}${PROGRAM_NAME}:${pl_normal} Error: ${1}" > /dev/stderr
     exit 1
 }
 
 
 # Show a usage message
 pl_usage() {
-    echo "Usage: ${0} [option] program [arguments...]"
+    echo "Usage: ${PROGRAM_NAME} [option] program [arguments...]"
     echo
     echo "Options:"
     echo -e "\t-h, --help\t\tDisplay this message and exit"
@@ -125,9 +125,9 @@ pl_version() {
 
 
 # Set colors if supported
-pl_set_color() {
+pl_set_colors() {
     ncolors="$(tput colors)"
-    if [ -z ${PL_NO_COLORS} ] && [ -t 1 ] && [ -n ${ncolors} ] && [ $(tput colors) -ge 8 ]; then
+    if [ -z "${PL_NO_COLORS}" ] && [ -t 1 ] && [ -n "${ncolors}" ] && [ "$(tput colors)" -ge 8 ]; then
         export pl_bold="$(tput bold)"
         export pl_underline="$(tput smul)"
         export pl_standout="$(tput smso)"
@@ -144,14 +144,14 @@ pl_set_color() {
 }
 
 # Set legacy support variables
-pl_set_legacy_support() {
-    if [ ! -z ${_STEAM_PATH} ]; then
-        pl_warning "_STEAM_PATH is deprecate, you should use PL_STEAM_PATH"
+pl_set_legacy() {
+    if [ ! -z "${_STEAM_PATH}" ]; then
+        #pl_warning "_STEAM_PATH is deprecate, you should use PL_STEAM_PATH"
         PL_STEAM_PATH="${_STEAM_PATH}"
     fi
 
-    if [ ! -z ${_STEAM_LIBRARY_PATH} ]; then
-        pl_warning "_STEAM_LIBRARY_PATH is deprecate, you should use PL_LIBRARY_PATH"
+    if [ ! -z "${_STEAM_LIBRARY_PATH}" ]; then
+        #pl_warning "_STEAM_LIBRARY_PATH is deprecate, you should use PL_LIBRARY_PATH"
         pl_add_library_path "${_STEAM_LIBRARY_PATH}"
     fi
 }
@@ -159,20 +159,15 @@ pl_set_legacy_support() {
 
 # Find Steam installation path
 pl_get_steam_path() {
-    if [ -z ${STEAM_COMPAT_CLIENT_INSTALL_PATH} ]; then
+    if [ -z "${STEAM_COMPAT_CLIENT_INSTALL_PATH}" ]; then
 
-        if [ ! -z ${PL_STEAM_PATH} ]; then
+        if [ ! -z "${PL_STEAM_PATH}" ]; then
             export STEAM_COMPAT_CLIENT_INSTALL_PATH="${PL_STEAM_PATH}"
             return
         fi
 
         if [ -d "${HOME}/.local/share/Steam" ] && [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
             export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.local/share/Steam"
-            return
-        fi
-
-        if [ -d "${HOME}/.steam/steam" ] && [ -e "${HOME}/.steam/steam/steam.sh" ]; then
-            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/steam"
             return
         fi
 
@@ -189,7 +184,12 @@ pl_get_steam_path() {
             fi
         fi
 
-        pl_error "Unable to find Steam path, please set PL_STEAM_PATH"
+        if [ -d "${HOME}/.steam/steam" ] && [ -e "${HOME}/.steam/steam/steam.sh" ]; then
+            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/steam"
+            return
+        fi
+
+        pl_error "unable to find Steam path, please set PL_STEAM_PATH"
 
     fi
 }
@@ -197,7 +197,7 @@ pl_get_steam_path() {
 
 # Add a path to the steam library paths
 pl_add_library_path() {
-    if [ -z ${PL_LIBRARY_PATH} ]; then
+    if [ -z "${PL_LIBRARY_PATH}" ]; then
         export PL_LIBRARY_PATH="${1}"
     else
         export PL_LIBRARY_PATH="${PL_LIBRARY_PATH}:${1}"
@@ -208,9 +208,9 @@ pl_add_library_path() {
 # Find Steam library paths
 pl_get_steam_library() {
     if [ -f "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/config/libraryfolders.vdf" ]; then
-        pl_paths="$(grep -i path "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/config/libraryfolders.vdf")"
+        pl_paths="$(grep -i path "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/config/libraryfolders.vdf" | cut -d '"' -f 4)"
         for pl_path in ${pl_paths}; do
-            if [ -d "${pl_path}/stemapps/common" ]; then
+            if [ -d "${pl_path}/steamapps/common" ]; then
                 pl_add_library_path "${pl_path}"
             fi
         done
@@ -220,7 +220,7 @@ pl_get_steam_library() {
         if [ -d "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/steamapps/common" ]; then
             pl_add_library_path "${STEAM_COMPAT_CLIENT_INSTALL_PATH}"
         else
-            pl_error "Unable to find Steam library, make sure that Proton is installed and set _STEAM_LIBRARY_PATH if necessary"
+            pl_error "unable to find Steam library, make sure that Proton is installed and set PL_LIBRARY_PATH if necessary"
         fi
     fi
 }
@@ -228,7 +228,7 @@ pl_get_steam_library() {
 
 # Add proton to proton list
 pl_add_proton_list() {
-    if [ -z ${PL_PROTON_LIST} ]; then
+    if [ -z "${PL_PROTON_LIST}" ]; then
         export PL_PROTON_LIST="${1}"
     else
         export PL_PROTON_LIST="${PL_PROTON_LIST}:${1}"
@@ -243,7 +243,7 @@ pl_get_proton_list() {
     for pl_path in ${PL_LIBRARY_PATH}; do
         library_path="${pl_path}/steamapps/common"
         for proton in ${library_path}/*; do
-            if echo ${proton} | grep -i proton && [ -f "${proton}/proton" ]; then
+            if echo ${proton} | grep -i proton 2>&1 > /dev/null && [ -f "${proton}/proton" ]; then
                 pl_add_proton_list "${proton}"
             fi
         done
@@ -254,28 +254,31 @@ pl_get_proton_list() {
 
 # Get proton
 pl_get_proton() {
-    if [ -z ${PL_PROTON_LIST} ]; then
-        pl_error "no Proton installation found, make sure you've installed Proton trough Steam"
-    fi
-
     old_ifs="${IFS}"
     IFS=":"
     for proton in ${PL_PROTON_LIST}; do
         name="$(basename ${proton})"
-        if [ -z ${PL_PROTON_VERSION} ]; then
-            if [ "${name}" != "Proton - Experimental" ] != [ -z ${pl_proton_path} ]; then
-                export pl_proton_path="${proton}/proton"
+        if [ -z "${PL_PROTON_VERSION}" ]; then
+            if [ "${name}" != "Proton - Experimental" ] || [ -z "${pl_proton_path}" ]; then
+                export pl_proton_path="${proton}"
             fi
         else
-            if [ "${name}" == "${PL_PROTON_VERSION}" ]; then
-                export pl_proton_path="${proton}/proton"
+            if [ "${name}" = "${PL_PROTON_VERSION}" ]; then
+                export pl_proton_path="${proton}"
             fi
         fi
     done
     IFS="${old_ifs}"
 
-    if [ -z ${pl_proton_path} ]; then
-        pl_error "Unable to find Proton installation of '${PL_PROTON_VERSION}'"
+    if [ -z "${PL_PROTON_VERSION}" ]; then
+        if [ -z "${pl_proton_path}" ]; then
+            pl_error "no Proton installation found, make sure you've installed Proton trough Steam"
+        fi
+        export PL_PROTON_VERSION="$(basename "${pl_proton_path}")"
+    else
+        if [ -z "${pl_proton_path}" ]; then
+            pl_error "Unable to find Proton installation of '${PL_PROTON_VERSION}'"
+        fi
     fi
 }
 
@@ -283,7 +286,7 @@ pl_get_proton() {
 pl_get_prefix() {
     if [ -z ${STEAM_COMPAT_DATA_PATH} ]; then
         if [ ! -z "${WINEPREFIX}" ]; then
-            pl_warning "is not recommended to use WINEPREFIX. Use PROTONPREFIX instead"
+            #pl_warning "is not recommended to use WINEPREFIX. Use PROTONPREFIX instead"
             export STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
             return
         fi
@@ -327,7 +330,7 @@ pl_run() {
 # Enable NVAPI / DLSS
 pl_nvapi() {
     if [ -z "${PROTON_ENABLE_NVAPI}" ]; then
-        if [ "${_NVAPI}" == "1" ] || [ "${_DLSS}" == "1" ]; then
+        if [ "${_NVAPI}" = "1" ] || [ "${_DLSS}" = "1" ]; then
             pl_info "NVAPI Enabled"
             export PROTON_ENABLE_NVAPI=1
         fi
@@ -337,7 +340,7 @@ pl_nvapi() {
 
 # Enable RayTracing
 pl_dxr() {
-    if [ "${_DXR}" == "1" ]; then
+    if [ "${_DXR}" = "1" ]; then
         pl_info "DirectX RayTracing Enabled"
         if [ -z "${VKD3D_CONFIG}" ]; then
             export VKD3D_CONFIG="dxr"
@@ -350,7 +353,7 @@ pl_dxr() {
 
 # Enable NVIDIA RayTracing
 pl_rtx() {
-    if [ "${_RTX}" == "1" ]; then
+    if [ "${_RTX}" = "1" ]; then
         export _NVAPI="1"
         export _DXR="1"
         pl_nvapi
@@ -370,47 +373,42 @@ pl_framecap() {
 
 # Enable AMD FSR
 pl_fsr() {
-    if [ "${_FSR}" == "1" ] && [ -z "${WINE_FULLSCREEN_FSR}" ]; then
+    if [ "${_FSR}" = "1" ] && [ -z "${WINE_FULLSCREEN_FSR}" ]; then
         pl_info "AMD FSR Enabled"
         export WINE_FULLSCREEN_FSR=1
     fi
 }
 
-
-
-
-# # Manage launch options
+# Manage launch options
+# TODO: Improve launch options
 # if [ -z "${1}" ]; then
 #     pl_error "Expecting a program name or aregument, try --help"
 # fi
 
-# case ${1} in
-#     "-h") pl_usage; exit 0;;
-#     "--help") pl_usage; exit 0;;
-#     "-v") pl_version; exit 0;;
-#     "--version") pl_version; exit 0;;
-# esac
+case ${1} in
+    "-h") pl_usage; exit 0;;
+    "--help") pl_usage; exit 0;;
+    "-v") pl_version; exit 0;;
+    "--version") pl_version; exit 0;;
+esac
 
-# # Get variables
-# if [ -z ${STEAM_COMPAT_CLIENT_INSTALL_PATH} ]; then
-#     pl_get_steam_path
-# fi
-# pl_info "Steam installation path is '${STEAM_COMPAT_CLIENT_INSTALL_PATH}'"
+# Set colors and legacy environment variables
+pl_set_colors
+pl_set_legacy
 
-# if [ -z ${_STEAM_LIBRARY_PATH} ]; then
-#     pl_get_steam_library
-# fi
-# pl_info "Steam library path is '${_STEAM_LIBRARY_PATH}'"
+# Get variables
+pl_get_steam_path
+pl_info "steam installation path is '${STEAM_COMPAT_CLIENT_INSTALL_PATH}'"
 
-# if [ -z "${_PROTON_VERSION}" ]; then
-#     pl_get_proton_version
-# fi
-# pl_info "Proton version '${_PROTON_VERSION}'"
+pl_get_steam_library
+pl_info "steam library path found: ${PL_LIBRARY_PATH}"
 
-# pl_get_proton_path
+pl_get_proton_list
+pl_get_proton
+pl_info "proton version '${PL_PROTON_VERSION}'"
 
-# pl_get_prefix
-# pl_info "Prefix '${STEAM_COMPAT_DATA_PATH}'"
+pl_get_prefix
+pl_info "prefix '${STEAM_COMPAT_DATA_PATH}'"
 
 # # Create and bootstrap prefix
 # if ! mkdir -pv "${STEAM_COMPAT_DATA_PATH}"; then
@@ -430,3 +428,12 @@ pl_fsr() {
 
 # # Run proton
 # pl_run "${@}"
+
+# pl_set_colors
+# pl_set_legacy_support
+# pl_get_steam_path
+# pl_get_steam_library
+# pl_get_proton_list
+# pl_get_proton
+# pl_get_prefix
+# pl_info "${STEAM_COMPAT_DATA_PATH}"
