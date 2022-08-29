@@ -146,13 +146,18 @@ pl_set_colors() {
 # Set legacy support variables
 pl_set_legacy() {
     if [ ! -z "${_STEAM_PATH}" ]; then
-        #pl_warning "_STEAM_PATH is deprecate, you should use PL_STEAM_PATH"
-        PL_STEAM_PATH="${_STEAM_PATH}"
+        #pl_warning "_STEAM_PATH is deprecated, you should use PL_STEAM_PATH"
+        export PL_STEAM_PATH="${_STEAM_PATH}"
     fi
 
     if [ ! -z "${_STEAM_LIBRARY_PATH}" ]; then
-        #pl_warning "_STEAM_LIBRARY_PATH is deprecate, you should use PL_LIBRARY_PATH"
+        #pl_warning "_STEAM_LIBRARY_PATH is deprecated, you should use PL_LIBRARY_PATH"
         pl_add_library_path "${_STEAM_LIBRARY_PATH}"
+    fi
+
+    if [ ! -z "${_PROTON_VERSION}" ]; then
+        #pl_warning "_PROTON_VERSION is deprecated, you should use PL_PROTON_VERSION"
+        export PL_PROTON_VERSION="${_PROTON_VERSION}"
     fi
 }
 
@@ -286,7 +291,7 @@ pl_get_proton() {
 pl_get_prefix() {
     if [ -z ${STEAM_COMPAT_DATA_PATH} ]; then
         if [ ! -z "${WINEPREFIX}" ]; then
-            #pl_warning "is not recommended to use WINEPREFIX. Use PROTONPREFIX instead"
+            pl_warning "is not recommended to use WINEPREFIX. Use PROTONPREFIX instead"
             export STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
             return
         fi
@@ -304,8 +309,8 @@ pl_get_prefix() {
 # Bootstrap prefix
 pl_bootstrap() {
     if [ ! -d "${1}/pfx/drive_c" ]; then
-        pl_info "Bootstrapping '${1}'"
-        "${proton}" run wineboot
+        pl_info "bootstrapping '${1}'"
+        "${pl_proton}" run wineboot
     fi
 }
 
@@ -381,9 +386,9 @@ pl_fsr() {
 
 # Manage launch options
 # TODO: Improve launch options
-# if [ -z "${1}" ]; then
-#     pl_error "Expecting a program name or aregument, try --help"
-# fi
+if [ -z "${1}" ]; then
+    pl_error "Expecting a program name or aregument, try --help"
+fi
 
 case ${1} in
     "-h") pl_usage; exit 0;;
@@ -406,17 +411,18 @@ pl_info "steam library path found: ${PL_LIBRARY_PATH}"
 pl_get_proton_list
 pl_get_proton
 pl_info "proton version '${PL_PROTON_VERSION}'"
+export pl_proton="${pl_proton_path}/proton"
 
 pl_get_prefix
 pl_info "prefix '${STEAM_COMPAT_DATA_PATH}'"
 
-# # Create and bootstrap prefix
-# if ! mkdir -pv "${STEAM_COMPAT_DATA_PATH}"; then
-#     pl_error "Failed to create prefix '${STEAM_COMPAT_DATA_PATH}'"
-# fi
-# if ! pl_bootstrap "${STEAM_COMPAT_DATA_PATH}"; then
-#     pl_error "Failed to bootstrap '${STEAM_COMPAT_DATA_PATH}'"
-# fi
+# Create and bootstrap prefix
+if ! mkdir -pv "${STEAM_COMPAT_DATA_PATH}"; then
+    pl_error "failed to create prefix '${STEAM_COMPAT_DATA_PATH}'"
+fi
+if ! pl_bootstrap "${STEAM_COMPAT_DATA_PATH}"; then
+    pl_error "failed to bootstrap '${STEAM_COMPAT_DATA_PATH}'"
+fi
 
 # pl_mangohud
 # pl_gamemode

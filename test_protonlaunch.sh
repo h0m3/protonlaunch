@@ -7,7 +7,6 @@ echo -e "\n\t:: bash"
 bash ./protonlaunch ${@}
 
 echo -e "\n\t:: zsh"
-zsh -y ./protonlaunch ${@}
 zsh ./protonlaunch ${@}
 
 echo -e "\n\t:: dash"
