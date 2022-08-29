@@ -213,45 +213,69 @@ function pl_get_steam_library() {
 }
 
 
-# Get proton version
-function pl_get_proton_version() {
-    library_path="${_STEAM_LIBRARY_PATH}/steamapps/common"
-    if ! proton_list="$(ls -1r "${library_path}" 2> /dev/null | grep -i proton 2> /dev/null)"; then
-        pl_error "Unable to find Proton on '${_STEAM_LIBRARY_PATH}', make sure proton is installed and set _PROTON_VERSION if necessary"
-    fi
-
-    if [ "$(echo "${proton_list}" | head -n 1)" == "Proton - Experimental" ]; then
-        export _PROTON_VERSION="$(echo "${proton_list}" | head -n 2 | tail -n 1)"
+# Add proton to proton list
+function pl_add_proton_list() {
+    if [ -z ${PL_PROTON_LIST} ]; then
+        export PL_PROTON_LIST="${1}"
     else
-        export _PROTON_VERSION="$(echo "${proton_list}" | head -n 1)"
+        export PL_PROTON_LIST="${PL_PROTON_LIST}:${1}"
     fi
 }
 
 
-# Get proton exexcutable path
-function pl_get_proton_path() {
-    if [ -e "${_STEAM_LIBRARY_PATH}/steamapps/common/${_PROTON_VERSION}/proton" ]; then
-        export proton="${_STEAM_LIBRARY_PATH}/steamapps/common/${_PROTON_VERSION}/proton"
-        return
-    fi
-
-    pl_error "Unable to find Proton installation on '${_STEAM_LIBRARY_PATH}/steamapps/common/${_PROTON_VERSION}'"
+# Get all proton versions
+function pl_get_proton_list() {
+    while read -rd: pl_path; do
+        library_path="${pl_path}/steamapps/common"
+        for proton in ${library_path}/*; do
+            if echo ${proton} | grep -i proton && [ -f "${proton}/proton" ]; then
+                pl_add_proton_list "${proton}"
+            fi
+        done
+    done <<< "${PL_LIBRARY_PATH}"
 }
 
+
+# Get proton
+function pl_get_proton() {
+    if [ -z ${PL_PROTON_LIST} ]; then
+        pl_error "no Proton installation found, make sure you've installed Proton trough Steam"
+    fi
+
+    while read -rd: proton; do
+        name="$(basename ${proton})"
+        if [ -z ${PL_PROTON_VERSION} ]; then
+            if [ "${name}" != "Proton - Experimental" ] != [ -z ${pl_proton_path} ]; then
+                export pl_proton_path="${proton}/proton"
+            fi
+        else
+            if [ "${name}" == "${PL_PROTON_VERSION}" ]; then
+                export pl_proton_path="${proton}/proton"
+            fi
+        fi
+    done <<< "${PL_PROTON_LIST}"
+
+    if [ -z ${pl_proton_path} ]; then
+        pl_error "Unable to find Proton installation of '${PL_PROTON_VERSION}'"
+    fi
+}
 
 # Get prefix path
 function pl_get_prefix() {
-    if [ ! -z "${WINEPREFIX}" ]; then
-        export STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
-        return
-    fi
+    if [ -z ${STEAM_COMPAT_DATA_PATH} ]; then
+        if [ ! -z "${WINEPREFIX}" ]; then
+            pl_warning "is not recommended to use WINEPREFIX. Use PROTONPREFIX instead"
+            export STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
+            return
+        fi
 
-    if [ ! -z "${PROTONPREFIX}" ]; then
-        export STEAM_COMPAT_DATA_PATH="${PROTONPREFIX}"
-        return
-    fi
+        if [ ! -z "${PROTONPREFIX}" ]; then
+            export STEAM_COMPAT_DATA_PATH="${PROTONPREFIX}"
+            return
+        fi
 
-    export STEAM_COMPAT_DATA_PATH="${HOME}/.proton"
+        export STEAM_COMPAT_DATA_PATH="${HOME}/.proton"
+    fi
 }
 
 
@@ -277,28 +301,6 @@ function pl_run() {
     else
         pl_info "Running: ${GAMEMODE_CMD} ${MANGOHUD_CMD} \"${proton}\" runinprefix \"${command}\" ${params}"
         ${GAMEMODE_CMD} ${MANGOHUD_CMD} "${proton}" runinprefix "${command}" ${params}
-    fi
-}
-
-
-# Enable MangoHUD
-function pl_mangohud() {
-    if command -v mangohud &> /dev/null && [ "${MANGOHUD}" == "1" ]; then
-        pl_info "MangoHUD enabled"
-        export MANGOHUD_CMD="mangohud"
-    else
-        export MANGOHUD_CMD=""
-    fi
-}
-
-
-# Enable GameMode
-function pl_gamemode() {
-    if command -v gamemoderun &> /dev/null && [ "${_GAMEMODE}" == "1" ]; then
-        pl_info "GameMode enabled"
-        export GAMEMODE_CMD="gamemoderun"
-    else
-        export GAMEMODE_CMD=""
     fi
 }
 
