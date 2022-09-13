@@ -36,7 +36,7 @@
 VERSION="0.7"
 
 # Get program name
-PROGRAM_NAME="$(basename "$(echo "${0}")")"
+PROGRAM_NAME="$(basename "${0}")"
 
 
 # Show message logs
@@ -78,45 +78,27 @@ pl_usage() {
     echo -e "\tPROTONPREFIX"
     echo -e "\t\tPath to proton prefix (Default is \$HOME/.proton). STEAM_COMPAT_DATA_PATH have priority"
     echo
-    echo -e "\tWINEPREFIX"
-    echo -e "\t\tSame as PROTONPREFIX. STEAM_COMPAT_DATA_PATH have priority"
-    echo
-    echo -e "\tMANGOHUD"
-    echo -e "\t\tEnable MangoHUD <https://github.com/flightlessmango/MangoHud>"
-    echo
-    echo -e "\t_STEAM_PATH"
+    echo -e "\tPL_STEAM_PATH"
     echo -e "\t\tPath to Steam installation user files (usually \$HOME/.local/share/Steam). STEAM_COMPAT_CLIENT_INSTALL_PATH have priority"
     echo
-    echo -e "\t_STEAM_LIBRARY_PATH"
+    echo -e "\tPL_LIBRARY_PATH"
     echo -e "\t\tPath to Steam Library folder (Default is \$STEAM_COMPAT_CLIENT_INSTALL_PATH)"
     echo
-    echo -e "\t_PROTON_VERSION"
+    echo -e "\tPL_PROTON_VERSION"
     echo -e "\t\tVersion of proton to use, same name as the 'proton folder' under steamapps/common. If ommited Protonlaunch will try to use the latest non experimental"
     echo
-    echo -e "\t_GAMEMODE"
-    echo -e "\t\tEnable GameMode <https://github.com/FeralInteractive/gamemode>"
-    echo
-    echo -e "\t_NVAPI"
+    echo -e "\tPL_NVAPI"
     echo -e "\t\tEnable NVAPI for supported games. This allows nvidia exclusives like DLSS for supported games. PROTON_ENABLE_NVAPI have priority"
     echo -e "\t\tNote: This option may crash your game, not all games and GPUs are supported"
     echo
-    echo -e "\t_DLSS"
-    echo -e "\t\tSame as _NVAPI. PROTON_ENABLE_NVAPI have priority"
+    echo -e "\tPL_RAYTRACING"
+    echo -e "\t\tEnable VKD3D DirectX RayTracing for supported games and hardware."
     echo -e "\t\tNote: This option may crash your game, not all games and GPUs are supported"
     echo
-    echo -e "\t_DXR"
-    echo -e "\t\tEnable VKD3D DirectX RayTracing for supported games."
-    echo -e "\t\tNote: For NVIDIA RTX cards you also need _NVAPI enabled"
-    echo -e "\t\tNote: This option may crash your game, not all games and GPUs are supported"
-    echo
-    echo -e "\t_RTX"
-    echo -e "\t\tEnable RayTracing for NVIDIA RTX cards. This replaces _DXR _NVAPI. PROTON_ENABLE_NVAPI have priority"
-    echo -e "\t\tNote: This option may crash your game, not all games and GPUs are supported"
-    echo
-    echo -e "\t_FRAMECAP"
+    echo -e "\tPL_FRAMECAP"
     echo -e "\t\tDXVK FPS capping. DXVK_FRAME_RATE have priority"
     echo
-    echo -e "\t_FSR"
+    echo -e "\tPL_FSR"
     echo -e "\t\tEnable AMD FSR for supported games. WINE_FULLSCREEN_FSR have priority"
     echo -e "\t\tNote: This option may crash your game, not all games and GPUs are supported"
     echo
@@ -138,37 +120,49 @@ pl_version() {
 pl_set_colors() {
     pl_debug "detecting terminal color support"
     ncolors="$(tput colors)"
-    if [ -z "${PL_NO_COLORS}" ] && [ -t 1 ] && [ -n "${ncolors}" ] && [ $(tput colors) -ge 8 ]; then
+    if [ -z "${PL_NO_COLORS}" ] && [ -t 1 ] && [ -n "${ncolors}" ] && [ "$(tput colors)" -ge 8 ]; then
         pl_debug "colors are enabled"
-        export pl_bold="$(tput bold)"
-        export pl_underline="$(tput smul)"
-        export pl_standout="$(tput smso)"
-        export pl_normal="$(tput sgr0)"
-        export pl_black="$(tput setaf 0)"
-        export pl_red="$(tput setaf 1)"
-        export pl_green="$(tput setaf 2)"
-        export pl_yellow="$(tput setaf 3)"
-        export pl_blue="$(tput setaf 4)"
-        export pl_magenta="$(tput setaf 5)"
-        export pl_cyan="$(tput setaf 6)"
-        export pl_white="$(tput setaf 7)"
+        export pl_bold
+        pl_bold="$(tput bold)"
+        export pl_underline
+        pl_underline="$(tput smul)"
+        export pl_standout
+        pl_standout="$(tput smso)"
+        export pl_normal
+        pl_normal="$(tput sgr0)"
+        export pl_black
+        pl_black="$(tput setaf 0)"
+        export pl_red
+        pl_red="$(tput setaf 1)"
+        export pl_green
+        pl_green="$(tput setaf 2)"
+        export pl_yellow
+        pl_yellow="$(tput setaf 3)"
+        export pl_blue
+        pl_blue="$(tput setaf 4)"
+        export pl_magenta
+        pl_magenta="$(tput setaf 5)"
+        export pl_cyan
+        pl_cyan="$(tput setaf 6)"
+        export pl_white
+        pl_white="$(tput setaf 7)"
     fi
 }
 
 # Set legacy support variables
 pl_set_legacy() {
     pl_debug "setting legacy variables"
-    if [ ! -z "${_STEAM_PATH}" ]; then
+    if [ -n "${_STEAM_PATH}" ]; then
         #pl_warning "_STEAM_PATH is deprecated, you should use PL_STEAM_PATH"
         export PL_STEAM_PATH="${_STEAM_PATH}"
     fi
 
-    if [ ! -z "${_STEAM_LIBRARY_PATH}" ]; then
+    if [ -n "${_STEAM_LIBRARY_PATH}" ]; then
         #pl_warning "_STEAM_LIBRARY_PATH is deprecated, you should use PL_LIBRARY_PATH"
         pl_add_library_path "${_STEAM_LIBRARY_PATH}"
     fi
 
-    if [ ! -z "${_PROTON_VERSION}" ]; then
+    if [ -n "${_PROTON_VERSION}" ]; then
         #pl_warning "_PROTON_VERSION is deprecated, you should use PL_PROTON_VERSION"
         export PL_PROTON_VERSION="${_PROTON_VERSION}"
     fi
@@ -177,7 +171,7 @@ pl_set_legacy() {
 # Check if a command is available
 pl_cmd_exists() {
     pl_debug "testing if command '${1}' exists"
-    command -v ${1} 2>&1 > /dev/null
+    command -v "${1}" > /dev/null 2>&1
 }
 
 # Find Steam installation path
@@ -185,7 +179,7 @@ pl_get_steam_path() {
     pl_debug "locating steam installation path"
     if [ -z "${STEAM_COMPAT_CLIENT_INSTALL_PATH}" ]; then
 
-        if [ ! -z "${PL_STEAM_PATH}" ]; then
+        if [ -n "${PL_STEAM_PATH}" ]; then
             export STEAM_COMPAT_CLIENT_INSTALL_PATH="${PL_STEAM_PATH}"
             return
         fi
@@ -201,7 +195,7 @@ pl_get_steam_path() {
         fi
 
         if [ -h "${HOME}/.steam/steam" ]; then
-            path="$(readlink ${HOME}/.steam/steam)"
+            path="$(readlink "${HOME}/.steam/steam")"
             if [ -e "${path}/steam.sh" ]; then
                 export STEAM_COMPAT_CLIENT_INSTALL_PATH="${path}"
                 return
@@ -270,8 +264,8 @@ pl_get_proton_list() {
     IFS=":"
     for pl_path in ${PL_LIBRARY_PATH}; do
         library_path="${pl_path}/steamapps/common"
-        for proton in ${library_path}/*; do
-            if echo ${proton} | grep -i proton 2>&1 > /dev/null && [ -f "${proton}/proton" ]; then
+        for proton in "${library_path}"/*; do
+            if echo "${proton}" | grep -i proton > /dev/null 2>&1 && [ -f "${proton}/proton" ]; then
                 pl_add_proton_list "${proton}"
             fi
         done
@@ -286,7 +280,7 @@ pl_get_proton() {
     old_ifs="${IFS}"
     IFS=":"
     for proton in ${PL_PROTON_LIST}; do
-        name="$(basename ${proton})"
+        name="$(basename "${proton}")"
         if [ -z "${PL_PROTON_VERSION}" ]; then
             if [ "${name}" != "Proton - Experimental" ] || [ -z "${pl_proton_path}" ]; then
                 export pl_proton_path="${proton}"
@@ -301,7 +295,8 @@ pl_get_proton() {
         if [ -z "${pl_proton_path}" ]; then
             pl_error "no Proton installation found, make sure you've installed Proton trough Steam"
         fi
-        export PL_PROTON_VERSION="$(basename "${pl_proton_path}")"
+        export PL_PROTON_VERSION
+        PL_PROTON_VERSION="$(basename "${pl_proton_path}")"
     elif [ -z "${pl_proton_path}" ]; then
         pl_error "Unable to find Proton installation of '${PL_PROTON_VERSION}'"
     fi
@@ -310,14 +305,14 @@ pl_get_proton() {
 # Get prefix path
 pl_get_prefix() {
     pl_debug "locating current prefix"
-    if [ -z ${STEAM_COMPAT_DATA_PATH} ]; then
-        if [ ! -z "${WINEPREFIX}" ]; then
+    if [ -z "${STEAM_COMPAT_DATA_PATH}" ]; then
+        if [ -n "${WINEPREFIX}" ]; then
             pl_warning "is not recommended to use WINEPREFIX. Use PROTONPREFIX instead"
             export STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
             return
         fi
 
-        if [ ! -z "${PROTONPREFIX}" ]; then
+        if [ -n "${PROTONPREFIX}" ]; then
             export STEAM_COMPAT_DATA_PATH="${PROTONPREFIX}"
             return
         fi
@@ -353,21 +348,21 @@ pl_nvapi() {
 # Necessary to enable raytracing due to NVAPI
 pl_is_nvidia() {
     pl_debug "checking if videocard is nvidia"
-    if [ ! -z "${PL_NO_NVIDIA}" ]; then
+    if [ -n "${PL_NO_NVIDIA}" ]; then
         return 1
-    elif [ ! -z "${PL_NVIDIA}" ]; then
+    elif [ -n "${PL_NVIDIA}" ]; then
         return 0
     fi
 
-    if pl_cmd_exists glxinfo && glxinfo | grep "OpenGL vendor string" | grep -i "nvidia" 2>&1 > /dev/null; then
+    if pl_cmd_exists glxinfo && glxinfo | grep "OpenGL vendor string" | grep -i "nvidia" > /dev/null 2>&1; then
         return 0
     fi
 
-    if pl_cmd_exists lspci && lspci | grep -E 'VGA|3D|Display' | grep -i nvidia 2>&1 > /dev/null; then
+    if pl_cmd_exists lspci && lspci | grep -E 'VGA|3D|Display' | grep -i nvidia > /dev/null 2>&1; then
         return 0
     fi
 
-    if pl_cmd_exists nvidia-smi && nvidia-smi -q | grep "Product Name" | grep -i nvidia 2>&1 > /dev/null; then
+    if pl_cmd_exists nvidia-smi && nvidia-smi -q | grep "Product Name" | grep -i nvidia > /dev/null 2>&1; then
         return 0
     fi
 
@@ -397,7 +392,7 @@ pl_raytracing() {
 
 # Enable frame capping
 pl_framecap() {
-    if [ ! -z "${PL_FRAMECAP}" ] && [ -z "${DXVK_FRAME_RATE}" ]; then
+    if [ -n "${PL_FRAMECAP}" ] && [ -z "${DXVK_FRAME_RATE}" ]; then
         pl_info "framerate capped at ${PL_FRAMECAP} FPS"
         export DXVK_FRAME_RATE="${PL_FRAMECAP}"
     fi
@@ -418,7 +413,7 @@ pl_fsr() {
 pl_run() {
     pl_command="${1}"
     shift
-    pl_params=${@}
+    pl_params=${*}
     pl_info "Program is '${pl_command}'"
 
     if [ -z "${pl_params}" ]; then
