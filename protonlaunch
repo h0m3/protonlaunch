@@ -41,13 +41,15 @@ PROGRAM_NAME="$(basename "${0}")"
 
 # Show message logs
 pl_info() {
-    echo "${pl_bold}${pl_blue}${PROGRAM_NAME}:${pl_normal} ${1}" > /dev/stdout
+    if [ -z "${PL_QUIET}" ] || [ "${PL_QUIET}" == "0" ]; then
+        echo "${pl_bold}${pl_blue}${PROGRAM_NAME}:${pl_normal} ${1}" > /dev/stdout
+    fi
 }
 
 
 # Show a warning message
 pl_warning() {
-    echo "${pl_bold}${pl_yellow}${PROGRAM_NAME}:${pl_normal} warning: ${1}" > /dev/stderr
+    echo "${pl_bold}${pl_yellow}${PROGRAM_NAME}:${pl_normal} warning: ${1}" > /dev/stdout
 }
 
 
@@ -70,8 +72,8 @@ pl_usage() {
     echo "Usage: ${PROGRAM_NAME} [option] program [arguments...]"
     echo
     echo "Options:"
-    echo -e "\t-h, --help\t\tDisplay this message and exit"
-    echo -e "\t-v, --version\tDisplay version and exit"
+    echo -e "\t--help\t\tDisplay this message and exit"
+    echo -e "\t--version\tDisplay version and exit"
     echo
     echo "Environment Variables:"
     echo -e "\tPROTONPREFIX"
@@ -115,15 +117,6 @@ pl_version() {
 }
 
 
-# Launch all launch options
-pl_launch_options() {
-    case ${1} in
-        "-h" | "--help") pl_usage; exit 0;;
-        "-v" | "--version") pl_version; exit 0;;
-        *) pl_error "${1} is not a valid argument, try ${PROGRAM_NAME} --help"; exit 1;;
-    esac
-}
-
 # Set colors if supported
 pl_set_colors() {
     pl_debug "detecting terminal color support"
@@ -157,6 +150,7 @@ pl_set_colors() {
     fi
 }
 
+
 # Set legacy support variables
 pl_set_legacy() {
     pl_debug "setting legacy variables"
@@ -176,11 +170,13 @@ pl_set_legacy() {
     fi
 }
 
+
 # Check if a command is available
 pl_cmd_exists() {
     pl_debug "testing if command '${1}' exists"
     command -v "${1}" > /dev/null 2>&1
 }
+
 
 # Find Steam installation path
 pl_get_steam_path() {
@@ -303,12 +299,13 @@ pl_get_proton() {
         if [ -z "${pl_proton_path}" ]; then
             pl_error "no Proton installation found, make sure you've installed Proton trough Steam"
         fi
-        export PL_PROTON_VERSION
         PL_PROTON_VERSION="$(basename "${pl_proton_path}")"
+        export PL_PROTON_VERSION
     elif [ -z "${pl_proton_path}" ]; then
         pl_error "Unable to find Proton installation of '${PL_PROTON_VERSION}'"
     fi
 }
+
 
 # Get prefix path
 pl_get_prefix() {
@@ -435,18 +432,75 @@ pl_run() {
     fi
 }
 
+# Print a list of proton versions
+pl_proton_version_list() {
+    if [ "${PL_PROTON_VERSION_LIST}" = "1" ]; then
+        old_ifs="${IFS}"
+        IFS=":"
+        for pl_path in ${PL_PROTON_LIST}; do
+            basename "${pl_path}"
+        done
+        IFS="${old_ifs}"
+        exit 0
+    fi
+}
+
 # Manage launch options
 while [ -n "${1}" ] && echo "${1}" | grep -Fq -- "--"; do
-    pl_launch_options "${1}"
-    shift
+    case ${1} in
+        "--help")
+            pl_usage
+            exit 0
+        ;;
+        "--version")
+            pl_version
+            exit 0
+        ;;
+        "--steam-path")
+            STEAM_COMPAT_CLIENT_INSTALL_PATH="${2}"
+            shift 2
+        ;;
+        "--proton-version")
+            PL_PROTON_VERSION="${2}"
+            shift 2
+        ;;
+        "--nvapi")
+            PL_NVAPI=1
+            shift
+        ;;
+        "--raytracing")
+            PL_RAYTRACING=1
+            shift
+        ;;
+        "--framecap")
+            PL_FRAMECAP="${2}"
+            shift 2
+        ;;
+        "--fsr")
+            PL_FSR=1
+            shift
+        ;;
+        "--proton-version-list")
+            PL_PROTON_VERSION_LIST=1
+            shift
+        ;;
+        "--quiet")
+            PL_QUIET=1
+            shift
+        ;;
+        "--debug")
+            PL_DEBUG=1
+            shift
+        ;;
+        *)
+            pl_error "${1} is not a valid argument, try ${PROGRAM_NAME} --help"
+        ;;
+    esac
 done
 
-if [ -z "${1}" ]; then
+if [ -z "${1}" ] && [ -z "${PL_PROTON_VERSION_LIST}" ]; then
     pl_error "Expecting a program name or aregument, try --help"
-    exit 1
 fi
-
-exit 0
 
 # Set colors and legacy environment variables
 pl_set_colors
@@ -460,6 +514,8 @@ pl_get_steam_library
 pl_debug "steam library path found: ${PL_LIBRARY_PATH}"
 
 pl_get_proton_list
+pl_proton_version_list
+
 pl_get_proton
 pl_info "proton version '${PL_PROTON_VERSION}'"
 export pl_proton="${pl_proton_path}/proton"
