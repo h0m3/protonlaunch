@@ -123,30 +123,30 @@ pl_set_colors() {
     ncolors="$(tput colors)"
     if [ -z "${PL_NO_COLORS}" ] && [ -t 1 ] && [ -n "${ncolors}" ] && [ "$(tput colors)" -ge 8 ]; then
         pl_debug "colors are enabled"
-        export pl_bold
         pl_bold="$(tput bold)"
-        export pl_underline
+        export pl_bold
         pl_underline="$(tput smul)"
-        export pl_standout
+        export pl_underline
         pl_standout="$(tput smso)"
-        export pl_normal
+        export pl_standout
         pl_normal="$(tput sgr0)"
-        export pl_black
+        export pl_normal
         pl_black="$(tput setaf 0)"
-        export pl_red
+        export pl_black
         pl_red="$(tput setaf 1)"
-        export pl_green
+        export pl_red
         pl_green="$(tput setaf 2)"
-        export pl_yellow
+        export pl_green
         pl_yellow="$(tput setaf 3)"
-        export pl_blue
+        export pl_yellow
         pl_blue="$(tput setaf 4)"
-        export pl_magenta
+        export pl_blue
         pl_magenta="$(tput setaf 5)"
-        export pl_cyan
+        export pl_magenta
         pl_cyan="$(tput setaf 6)"
-        export pl_white
+        export pl_cyan
         pl_white="$(tput setaf 7)"
+        export pl_white
     fi
 }
 
@@ -156,7 +156,8 @@ pl_set_legacy() {
     pl_debug "setting legacy variables"
     if [ -n "${_STEAM_PATH}" ]; then
         #pl_warning "_STEAM_PATH is deprecated, you should use PL_STEAM_PATH"
-        export PL_STEAM_PATH="${_STEAM_PATH}"
+        PL_STEAM_PATH="${_STEAM_PATH}"
+        export PL_STEAM_PATH
     fi
 
     if [ -n "${_STEAM_LIBRARY_PATH}" ]; then
@@ -166,7 +167,8 @@ pl_set_legacy() {
 
     if [ -n "${_PROTON_VERSION}" ]; then
         #pl_warning "_PROTON_VERSION is deprecated, you should use PL_PROTON_VERSION"
-        export PL_PROTON_VERSION="${_PROTON_VERSION}"
+        PL_PROTON_VERSION="${_PROTON_VERSION}"
+        export PL_PROTON_VERSION
     fi
 }
 
@@ -184,34 +186,28 @@ pl_get_steam_path() {
     if [ -z "${STEAM_COMPAT_CLIENT_INSTALL_PATH}" ]; then
 
         if [ -n "${PL_STEAM_PATH}" ]; then
-            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${PL_STEAM_PATH}"
-            return
-        fi
+            STEAM_COMPAT_CLIENT_INSTALL_PATH="${PL_STEAM_PATH}"
 
-        if [ -d "${HOME}/.local/share/Steam" ] && [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
-            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.local/share/Steam"
-            return
-        fi
+        elif [ -d "${HOME}/.local/share/Steam" ] && [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
+            STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.local/share/Steam"
 
-        if [ -d "${HOME}/.steam/debian-installaton" ] && [ -e "${HOME}/.steam/debian-installation/steam.sh" ]; then
-            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/debian-installation"
-            return
-        fi
+        elif [ -d "${HOME}/.steam/debian-installaton" ] && [ -e "${HOME}/.steam/debian-installation/steam.sh" ]; then
+            STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/debian-installation"
 
-        if [ -h "${HOME}/.steam/steam" ]; then
+        elif [ -h "${HOME}/.steam/steam" ]; then
             path="$(readlink "${HOME}/.steam/steam")"
             if [ -e "${path}/steam.sh" ]; then
-                export STEAM_COMPAT_CLIENT_INSTALL_PATH="${path}"
-                return
+                STEAM_COMPAT_CLIENT_INSTALL_PATH="${path}"
             fi
+
+        elif [ -d "${HOME}/.steam/steam" ] && [ -e "${HOME}/.steam/steam/steam.sh" ]; then
+            STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/steam"
+
+        else
+            pl_error "unable to find Steam path, please set PL_STEAM_PATH"
         fi
 
-        if [ -d "${HOME}/.steam/steam" ] && [ -e "${HOME}/.steam/steam/steam.sh" ]; then
-            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/steam"
-            return
-        fi
-
-        pl_error "unable to find Steam path, please set PL_STEAM_PATH"
+        export STEAM_COMPAT_CLIENT_INSTALL_PATH
 
     fi
 }
@@ -221,10 +217,12 @@ pl_get_steam_path() {
 pl_add_library_path() {
     pl_debug "adding ${1} to PL_LIBRARY_PATH"
     if [ -z "${PL_LIBRARY_PATH}" ]; then
-        export PL_LIBRARY_PATH="${1}"
+        PL_LIBRARY_PATH="${1}"
     else
-        export PL_LIBRARY_PATH="${PL_LIBRARY_PATH}:${1}"
+        PL_LIBRARY_PATH="${PL_LIBRARY_PATH}:${1}"
     fi
+    export PL_LIBRARY_PATH
+
 }
 
 
@@ -254,10 +252,11 @@ pl_get_steam_library() {
 pl_add_proton_list() {
     pl_debug "adding '${1}' to proton list"
     if [ -z "${PL_PROTON_LIST}" ]; then
-        export PL_PROTON_LIST="${1}"
+        PL_PROTON_LIST="${1}"
     else
-        export PL_PROTON_LIST="${PL_PROTON_LIST}:${1}"
+        PL_PROTON_LIST="${PL_PROTON_LIST}:${1}"
     fi
+    export PL_PROTON_LIST
 }
 
 
@@ -287,10 +286,12 @@ pl_get_proton() {
         name="$(basename "${proton}")"
         if [ -z "${PL_PROTON_VERSION}" ]; then
             if [ "${name}" != "Proton - Experimental" ] || [ -z "${pl_proton_path}" ]; then
-                export pl_proton_path="${proton}"
+                pl_proton_path="${proton}"
+                export pl_proton_path
             fi
         elif [ "${name}" = "${PL_PROTON_VERSION}" ]; then
-            export pl_proton_path="${proton}"
+            pl_proton_path="${proton}"
+            export pl_proton_path
         fi
     done
     IFS="${old_ifs}"
@@ -311,19 +312,19 @@ pl_get_proton() {
 pl_get_prefix() {
     pl_debug "locating current prefix"
     if [ -z "${STEAM_COMPAT_DATA_PATH}" ]; then
-        if [ -n "${WINEPREFIX}" ]; then
-            pl_warning "is not recommended to use WINEPREFIX. Use PROTONPREFIX instead"
-            export STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
-            return
-        fi
-
         if [ -n "${PROTONPREFIX}" ]; then
-            export STEAM_COMPAT_DATA_PATH="${PROTONPREFIX}"
-            return
+            STEAM_COMPAT_DATA_PATH="${PROTONPREFIX}"
+
+        elif [ -n "${WINEPREFIX}" ]; then
+            pl_warning "is not recommended to use WINEPREFIX. Use PROTONPREFIX instead"
+            STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
+
+        else
+            pl_debug "no variable located, ${HOME}/.proton will be"
+            STEAM_COMPAT_DATA_PATH="${HOME}/.proton"
         fi
 
-        pl_debug "no variable located, ${HOME}/.proton will be"
-        export STEAM_COMPAT_DATA_PATH="${HOME}/.proton"
+        export STEAM_COMPAT_DATA_PATH
     fi
 }
 
@@ -343,7 +344,8 @@ pl_nvapi() {
         if [ "${PL_NVAPI}" = "1" ]; then
             pl_info "NVAPI enabled"
             pl_warning "NVAPI on Proton is experimental, it may break your game"
-            export PROTON_ENABLE_NVAPI=1
+            PROTON_ENABLE_NVAPI=1
+            export PROTON_ENABLE_NVAPI
         fi
     fi
 }
@@ -383,23 +385,28 @@ pl_raytracing() {
 
         if pl_is_nvidia; then
             pl_debug "enabling NVAPI since its a nvidia card"
-            export PROTON_ENABLE_NVAPI=1
+            PROTON_ENABLE_NVAPI=1
+            export PROTON_ENABLE_NVAPI
         fi
 
         if [ -z "${VKD3D_CONFIG}" ]; then
-            export VKD3D_CONFIG="dxr"
+            VKD3D_CONFIG="dxr"
         else
-            export VKD3D_CONFIG="${VKD3D_CONFIG}:dxr"
+            VKD3D_CONFIG="${VKD3D_CONFIG}:dxr"
         fi
+        export VKD3D_CONFIG
+
     fi
 }
 
 
 # Enable frame capping
+# TODO: Add support for vkd3d and wine3d
 pl_framecap() {
     if [ -n "${PL_FRAMECAP}" ] && [ -z "${DXVK_FRAME_RATE}" ]; then
         pl_info "framerate capped at ${PL_FRAMECAP} FPS"
-        export DXVK_FRAME_RATE="${PL_FRAMECAP}"
+        DXVK_FRAME_RATE="${PL_FRAMECAP}"
+        export DXVK_FRAME_RATE
     fi
 }
 
@@ -409,7 +416,8 @@ pl_fsr() {
     if [ "${PL_FSR}" = "1" ] && [ -z "${WINE_FULLSCREEN_FSR}" ]; then
         pl_info "FSR enabled"
         pl_warning "FSR on Proton is experimental, it may break your game"
-        export WINE_FULLSCREEN_FSR=1
+        WINE_FULLSCREEN_FSR=1
+        export WINE_FULLSCREEN_FSR
     fi
 }
 
@@ -518,7 +526,7 @@ pl_proton_version_list
 
 pl_get_proton
 pl_info "proton version '${PL_PROTON_VERSION}'"
-export pl_proton="${pl_proton_path}/proton"
+pl_proton="${pl_proton_path}/proton"
 
 pl_get_prefix
 pl_info "prefix '${STEAM_COMPAT_DATA_PATH}'"
