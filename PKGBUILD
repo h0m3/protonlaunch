@@ -7,7 +7,7 @@ arch=('any')
 url="https://github.com/h0m3/protonlaunch"
 license=('BSD')
 depends=("steam")
-optdepends=("steam-native")
+optdepends=("steam-native-runtime")
 source=("$pkgname::git+https://github.com/h0m3/$pkgname.git#branch=main")
 sha256sums=('SKIP')
 

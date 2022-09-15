@@ -33,7 +33,7 @@
 
 
 # Version string
-VERSION="0.7"
+VERSION="0.8"
 
 # Get program name
 PROGRAM_NAME="$(basename "${0}")"
@@ -64,7 +64,6 @@ pl_debug() {
         echo "${pl_normal}${PROGRAM_NAME}: debug: ${1}" > /dev/stdout
     fi
 }
-
 
 # Show a usage message
 pl_usage() {
@@ -115,6 +114,15 @@ pl_version() {
     echo "There is NO WARRANTY, to the extent permitted by law."
 }
 
+
+# Launch all launch options
+pl_launch_options() {
+    case ${1} in
+        "-h" | "--help") pl_usage; exit 0;;
+        "-v" | "--version") pl_version; exit 0;;
+        *) pl_error "${1} is not a valid argument, try ${PROGRAM_NAME} --help"; exit 1;;
+    esac
+}
 
 # Set colors if supported
 pl_set_colors() {
@@ -265,7 +273,7 @@ pl_get_proton_list() {
     for pl_path in ${PL_LIBRARY_PATH}; do
         library_path="${pl_path}/steamapps/common"
         for proton in "${library_path}"/*; do
-            if echo "${proton}" | grep -i proton > /dev/null 2>&1 && [ -f "${proton}/proton" ]; then
+            if echo "${proton}" | grep -Fqi proton && [ -f "${proton}/proton" ]; then
                 pl_add_proton_list "${proton}"
             fi
         done
@@ -354,15 +362,15 @@ pl_is_nvidia() {
         return 0
     fi
 
-    if pl_cmd_exists glxinfo && glxinfo | grep "OpenGL vendor string" | grep -i "nvidia" > /dev/null 2>&1; then
+    if pl_cmd_exists glxinfo && glxinfo | grep -F "OpenGL vendor string" | grep -Fqi "nvidia"; then
         return 0
     fi
 
-    if pl_cmd_exists lspci && lspci | grep -E 'VGA|3D|Display' | grep -i nvidia > /dev/null 2>&1; then
+    if pl_cmd_exists lspci && lspci | grep -E 'VGA|3D|Display' | grep -Fqi nvidia; then
         return 0
     fi
 
-    if pl_cmd_exists nvidia-smi && nvidia-smi -q | grep "Product Name" | grep -i nvidia > /dev/null 2>&1; then
+    if pl_cmd_exists nvidia-smi && nvidia-smi -q | grep -F "Product Name" | grep -Fqi nvidia > /dev/null 2>&1; then
         return 0
     fi
 
@@ -427,19 +435,18 @@ pl_run() {
     fi
 }
 
-
 # Manage launch options
-# TODO: Improve launch options
+while [ -n "${1}" ] && echo "${1}" | grep -Fq -- "--"; do
+    pl_launch_options "${1}"
+    shift
+done
+
 if [ -z "${1}" ]; then
     pl_error "Expecting a program name or aregument, try --help"
+    exit 1
 fi
 
-case ${1} in
-    "-h") pl_usage; exit 0;;
-    "--help") pl_usage; exit 0;;
-    "-v") pl_version; exit 0;;
-    "--version") pl_version; exit 0;;
-esac
+exit 0
 
 # Set colors and legacy environment variables
 pl_set_colors
