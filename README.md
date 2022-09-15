@@ -34,7 +34,7 @@ cd protonlaunch
 makepkg -si
 ```
 
-Or your favorite AUR package manager. eg.: `yay`
+If you're not running Arch Linux you can still use the single line automatic installation below or the [manual installation process](https://github.com/h0m3/protonlaunch/wiki/Manual-installation).
 
 ## Single line automatic installation
 
@@ -47,6 +47,10 @@ curl -O https://raw.githubusercontent.com/h0m3/protonlaunch/main/protonlaunch; s
 ## You're done
 
 Now just test it, if you have a standard Steam / Proton installation, it should work by just typing `protonlaunch winecfg` in your terminal.
+
+# Manual installation
+
+We have a [manual installation process](https://github.com/h0m3/protonlaunch/wiki/Manual-installation) guide on your wiki if you prefer
 
 # Check out our FAQ
 
