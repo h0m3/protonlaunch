@@ -33,7 +33,7 @@
 
 
 # Version string
-VERSION="0.8"
+VERSION="0.9"
 
 # Get program name
 PROGRAM_NAME="$(basename "${0}")"
@@ -76,10 +76,6 @@ pl_usage() {
     printf "\t--version\t\tDisplay version and exit\n"
     printf "\t--steam-path\t\tPath to Steam installation user files (usually \$HOME/.steam/steam). STEAM_COMPAT_CLIENT_INSTALL_PATH have priority\n"
     printf "\t--proton-version\tVersion of proton to use, check out --proton-version-list\n"
-    printf "\t--nvapi\t\t\tEnable NVAPI for supported games. This allows nvidia exclusives like DLSS for supported games. PROTON_ENABLE_NVAPI have priority\n"
-    printf "\t--raytracing\t\tEnable VKD3D DirectX RayTracing for supported games and hardware\n"
-    printf "\t--framecap\t\tDXVK FPS capping. DXVK_FRAME_RATE have priority\n"
-    printf "\t--fsr\t\t\tEnable AMD FSR for supported games. WINE_FULLSCREEN_FSR have priority\n"
     printf "\t--proton-version-list\tReturn a list of all found Proton versions\n"
     printf "\t--quiet\t\t\tSupress information messages, makes protonlaunch more quiet, ideal for scripts\n"
     printf "\t--debug\t\t\tEnable debug messages, may help troubleshooting. I recommend enable debug for posting protonlaunch issues\n"
@@ -96,21 +92,6 @@ pl_usage() {
     printf "\n"
     printf "\tPL_PROTON_VERSION\n"
     printf "\t\tVersion of proton to use, check out --proton-version-list\n"
-    printf "\n"
-    printf "\tPL_NVAPI\n"
-    printf "\t\tEnable NVAPI for supported games. This allows nvidia exclusives like DLSS for supported games. PROTON_ENABLE_NVAPI have priority\n"
-    printf "\t\tNote: This option may crash your game, not all games and GPUs are supported\n"
-    printf "\n"
-    printf "\tPL_RAYTRACING\n"
-    printf "\t\tEnable VKD3D DirectX RayTracing for supported games and hardware\n"
-    printf "\t\tNote: This option may crash your game, not all games and GPUs are supported\n"
-    printf "\n"
-    printf "\tPL_FRAMECAP\n"
-    printf "\t\tDXVK FPS capping. DXVK_FRAME_RATE have priority\n"
-    printf "\n"
-    printf "\tPL_FSR\n"
-    printf "\t\tEnable AMD FSR for supported games. WINE_FULLSCREEN_FSR have priority\n"
-    printf "\t\tNote: This option may crash your game, not all games and GPUs are supported\n"
     printf "\n"
 }
 
@@ -353,89 +334,6 @@ pl_bootstrap() {
 }
 
 
-# Enable NVAPI
-pl_nvapi() {
-    if [ -z "${PROTON_ENABLE_NVAPI}" ]; then
-        if [ "${PL_NVAPI}" = "1" ]; then
-            pl_info "NVAPI enabled"
-            pl_warning "NVAPI on Proton is experimental, it may break your game"
-            PROTON_ENABLE_NVAPI=1
-            export PROTON_ENABLE_NVAPI
-        fi
-    fi
-}
-
-
-# Check if your videocard is nvidia
-# Necessary to enable raytracing due to NVAPI
-pl_is_nvidia() {
-    pl_debug "checking if videocard is nvidia"
-    if [ -n "${PL_NO_NVIDIA}" ]; then
-        return 1
-    elif [ -n "${PL_NVIDIA}" ]; then
-        return 0
-    fi
-
-    if pl_cmd_exists glxinfo && glxinfo | grep -F "OpenGL vendor string" | grep -Fqi "nvidia"; then
-        return 0
-    fi
-
-    if pl_cmd_exists lspci && lspci | grep -E 'VGA|3D|Display' | grep -Fqi nvidia; then
-        return 0
-    fi
-
-    if pl_cmd_exists nvidia-smi && nvidia-smi -q | grep -F "Product Name" | grep -Fqi nvidia > /dev/null 2>&1; then
-        return 0
-    fi
-
-    return 1
-}
-
-
-# Enable RayTracing
-pl_raytracing() {
-    if [ "${PL_RAYTRACING}" = "1" ]; then
-        pl_info "RayTracing enabled"
-        pl_warning "RayTracing on Proton is experimental, it may break your game"
-
-        if pl_is_nvidia; then
-            pl_debug "enabling NVAPI since its a nvidia card"
-            PROTON_ENABLE_NVAPI=1
-            export PROTON_ENABLE_NVAPI
-        fi
-
-        if [ -z "${VKD3D_CONFIG}" ]; then
-            VKD3D_CONFIG="dxr"
-        else
-            VKD3D_CONFIG="${VKD3D_CONFIG}:dxr"
-        fi
-        export VKD3D_CONFIG
-
-    fi
-}
-
-
-# Enable frame capping
-pl_framecap() {
-    if [ -n "${PL_FRAMECAP}" ] && [ -z "${DXVK_FRAME_RATE}" ]; then
-        pl_info "framerate capped at ${PL_FRAMECAP} FPS"
-        DXVK_FRAME_RATE="${PL_FRAMECAP}"
-        export DXVK_FRAME_RATE
-    fi
-}
-
-
-# Enable AMD FSR
-pl_fsr() {
-    if [ "${PL_FSR}" = "1" ] && [ -z "${WINE_FULLSCREEN_FSR}" ]; then
-        pl_info "FSR enabled"
-        pl_warning "FSR on Proton is experimental, it may break your game"
-        WINE_FULLSCREEN_FSR=1
-        export WINE_FULLSCREEN_FSR
-    fi
-}
-
-
 # Run a program
 pl_run() {
     pl_command="${1}"
@@ -487,22 +385,6 @@ while [ -n "${1}" ] && echo "${1}" | grep -Fq -- "--"; do
             PL_PROTON_VERSION="${2}"
             shift 2
         ;;
-        "--nvapi")
-            PL_NVAPI=1
-            shift
-        ;;
-        "--raytracing")
-            PL_RAYTRACING=1
-            shift
-        ;;
-        "--framecap")
-            PL_FRAMECAP="${2}"
-            shift 2
-        ;;
-        "--fsr")
-            PL_FSR=1
-            shift
-        ;;
         "--proton-version-list")
             PL_PROTON_VERSION_LIST=1
             shift
@@ -553,12 +435,6 @@ fi
 if ! pl_bootstrap "${STEAM_COMPAT_DATA_PATH}"; then
     pl_error "failed to bootstrap '${STEAM_COMPAT_DATA_PATH}'"
 fi
-
-# Enable Proton extra capabilities
-pl_nvapi
-pl_raytracing
-pl_framecap
-pl_fsr
 
 # Run proton
 pl_run "${@}"

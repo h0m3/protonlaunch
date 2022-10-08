@@ -9,7 +9,7 @@ A small piece of script to launch Steam Proton instance directly from the CLI, s
 ## Requirements
 
 - [Steam](https://store.steampowered.com/)
-- [Bash](https://www.gnu.org/software/bash/)
+- [POSIX Shell](https://en.wikipedia.org/wiki/POSIX) eg. [bash](https://www.gnu.org/software/bash/)
 - [curl](https://curl.se/) (only needed for automatic installation)
 - [sudo](https://www.sudo.ws/) (only needed for automatic installation)
 
