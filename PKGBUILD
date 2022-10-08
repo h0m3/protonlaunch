@@ -21,5 +21,5 @@ package() {
     mv -v "$srcdir/$pkgname/README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
     mv -v "$srcdir/$pkgname/screenshot.png" "$pkgdir/usr/share/doc/$pkgname/screenshot.png"
 
-    chmod +x $pkgdir/usr/bin/$pkgname
+    chmod +x "$pkgdir/usr/bin/$pkgname"
 }

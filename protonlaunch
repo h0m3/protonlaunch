@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # Copyright (c) 2022, Artur 'h0m3' Paiva <dr.hoome@gmail.com>
 # All rights reserved.
 #
@@ -41,7 +41,7 @@ PROGRAM_NAME="$(basename "${0}")"
 
 # Show message logs
 pl_info() {
-    if [ -z "${PL_QUIET}" ] || [ "${PL_QUIET}" == "0" ]; then
+    if [ -z "${PL_QUIET}" ] || [ "${PL_QUIET}" = "0" ]; then
         echo "${pl_bold}${pl_blue}${PROGRAM_NAME}:${pl_normal} ${1}" > /dev/stdout
     fi
 }
@@ -69,10 +69,10 @@ pl_debug() {
 
 # Show a usage message
 pl_usage() {
-    echo "Usage: ${PROGRAM_NAME} [option] program [arguments...]"
-    echo
-    echo "Options:"
-    echo -e "\t--help\t\t\tDisplay this message and exit"
+    printf "Usage: %s [option] program [arguments...]\n" "${PROGRAM_NAME}"
+    printf "\n"
+    printf "Options:\n"
+    printf "\t--help\t\t\tDisplay this message and exit\n"
     echo -e "\t--version\t\tDisplay version and exit"
     echo -e "\t--steam-path\t\tPath to Steam installation user files (usually \$HOME/.steam/steam). STEAM_COMPAT_CLIENT_INSTALL_PATH have priority"
     echo -e "\t--proton-version\tVersion of proton to use, check out --proton-version-list"
@@ -292,11 +292,19 @@ pl_get_proton() {
     old_ifs="${IFS}"
     IFS=":"
     for proton in ${PL_PROTON_LIST}; do
+
+        # https://stackoverflow.com/questions/67069192/quick-sorting-a-list-of-files-in-posix-sh
+        # Since it check the whole filepath it isn't fixed yet
+        [ -e "$proton" ] || continue # Order file in lexicogaphical order
+
         name="$(basename "${proton}")"
         if [ -z "${PL_PROTON_VERSION}" ]; then
-            if [ "${name}" != "Proton - Experimental" ] || [ -z "${pl_proton_path}" ]; then
+            if [ "${name}" != "Proton - Experimental" ]; then
+                PL_PROTON_VERSION="${name}"
                 pl_proton_path="${proton}"
                 export pl_proton_path
+                export PL_PROTON_VERSION
+                break
             fi
         elif [ "${name}" = "${PL_PROTON_VERSION}" ]; then
             pl_proton_path="${proton}"
@@ -305,14 +313,12 @@ pl_get_proton() {
     done
     IFS="${old_ifs}"
 
-    if [ -z "${PL_PROTON_VERSION}" ]; then
-        if [ -z "${pl_proton_path}" ]; then
+    if [ -z "${pl_proton_path}" ]; then
+        if [ -z "${PL_PROTON_VERSION}" ]; then
             pl_error "no Proton installation found, make sure you've installed Proton trough Steam"
+        else
+            pl_error "Unable to find Proton installation of '${PL_PROTON_VERSION}'"
         fi
-        PL_PROTON_VERSION="$(basename "${pl_proton_path}")"
-        export PL_PROTON_VERSION
-    elif [ -z "${pl_proton_path}" ]; then
-        pl_error "Unable to find Proton installation of '${PL_PROTON_VERSION}'"
     fi
 }
 
@@ -410,7 +416,6 @@ pl_raytracing() {
 
 
 # Enable frame capping
-# TODO: Add support for vkd3d and wine3d
 pl_framecap() {
     if [ -n "${PL_FRAMECAP}" ] && [ -z "${DXVK_FRAME_RATE}" ]; then
         pl_info "framerate capped at ${PL_FRAMECAP} FPS"
@@ -445,9 +450,10 @@ pl_run() {
     else
         pl_debug "using 'runinprefix' since there is paramenters"
         pl_debug "Running: \"${pl_proton}\" runinprefix \"${pl_command}\" ${pl_params}"
-        "${pl_proton}" runinprefix "${pl_command}" ${pl_params}
+        "${pl_proton}" runinprefix "${pl_command}" "${pl_params}"
     fi
 }
+
 
 # Print a list of proton versions
 pl_proton_version_list() {
