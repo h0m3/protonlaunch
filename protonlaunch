@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
 # Copyright (c) 2022, Artur 'h0m3' Paiva <dr.hoome@gmail.com>
 # All rights reserved.
 #
@@ -12,7 +12,7 @@
 #   this list of conditions and the following disclaimer in the documentation
 #   and/or other materials provided with the distribution.
 #
-# * Neither the name of [project] nor the names of its
+# * Neither the name of protonlaunch nor the names of its
 #   contributors may be used to endorse or promote products derived from
 #   this software without specific prior written permission.
 #
@@ -33,63 +33,72 @@
 
 
 # Version string
-VERSION="0.5"
+VERSION="0.9"
 
 # Get program name
-PROGRAM_NAME="${0}"
-PROGRAM_NAME="$(basename "$(echo "${PROGRAM_NAME}")")"
+PROGRAM_NAME="$(basename "${0}")"
 
 
 # Show message logs
-function info() {
-    echo "${PROGRAM_NAME}: ${1}" >&1
+pl_info() {
+    if [ -z "${PL_QUIET}" ] || [ "${PL_QUIET}" = "0" ]; then
+        echo "${pl_bold}${pl_blue}${PROGRAM_NAME}:${pl_normal} ${1}" > /dev/stdout
+    fi
+}
+
+
+# Show a warning message
+pl_warning() {
+    echo "${pl_bold}${pl_yellow}${PROGRAM_NAME}:${pl_normal} warning: ${1}" > /dev/stdout
 }
 
 
 # Raise an error and terminate the application
-function error() {
-    echo "${PROGRAM_NAME}: Error: ${1}" >&2
+pl_error() {
+    echo "${pl_bold}${pl_red}${PROGRAM_NAME}:${pl_normal} error: ${1}" > /dev/stderr
     exit 1
 }
 
 
+# Show debug messages
+pl_debug() {
+    if [ "${PL_DEBUG}" = "1" ]; then
+        echo "${pl_normal}${PROGRAM_NAME}: debug: ${1}" > /dev/stdout
+    fi
+}
+
 # Show a usage message
-function usage() {
-    echo "Usage: ${0} [option] program [arguments...]"
-    echo
-    echo "Options:"
-    echo -e "\t-h, --help\t\tDisplay this message and exit"
-    echo -e "\t-v, --version\tDisplay version and exit"
-    echo
-    echo "Environment Variables:"
-    echo -e "\tSTEAM_COMPAT_CLIENT_INSTALL_PATH"
-    echo -e "\t\tPath to Steam installation user files (usually \$HOME/.local/share/Steam)"
-    echo
-    echo -e "\t_STEAM_PATH"
-    echo -e "\t\tSame as STEAM_COMPAT_CLIENT_INSTALL_PATH. STEAM_COMPAT_CLIENT_INSTALL_PATH have priority"
-    echo
-    echo -e "\t_STEAM_LIBRARY_PATH"
-    echo -e "\t\tPath to Steam Library folder (Default is \$STEAM_COMPAT_CLIENT_INSTALL_PATH)"
-    echo
-    echo -e "\t_PROTON_VERSION"
-    echo -e "\t\tVersion of proton to use, same name as the 'proton folder' under steamapps/common. If ommited Protonlaunch will try to use the latest non experimental"
-    echo
-    echo -e "\tSTEAM_COMPAT_DATA_PATH"
-    echo -e "\t\tPath to proton prefix. (Default is \$HOME/.proton)"
-    echo
-    echo -e "\tWINEPREFIX"
-    echo -e "\t\tSame as STEAM_COMPAT_DATA_PATH. STEAM_COMPAT_DATA_PATH have priority"
-    echo
-    echo -e "\tPROTONPREFIX"
-    echo -e "\t\tSame as STEAM_COMPAT_DATA_PATH. STEAM_COMPAT_DATA_PATH have priority"
-    echo
+pl_usage() {
+    printf "Usage: %s [option] program [arguments...]\n" "${PROGRAM_NAME}"
+    printf "\n"
+    printf "Options:\n"
+    printf "\t--help\t\t\tDisplay this message and exit\n"
+    printf "\t--version\t\tDisplay version and exit\n"
+    printf "\t--steam-path\t\tPath to Steam installation user files (usually \$HOME/.steam/steam). STEAM_COMPAT_CLIENT_INSTALL_PATH have priority\n"
+    printf "\t--proton-version\tVersion of proton to use, check out --proton-version-list\n"
+    printf "\t--proton-version-list\tReturn a list of all found Proton versions\n"
+    printf "\t--quiet\t\t\tSupress information messages, makes protonlaunch more quiet, ideal for scripts\n"
+    printf "\t--debug\t\t\tEnable debug messages, may help troubleshooting. I recommend enable debug for posting protonlaunch issues\n"
+    printf "\n"
+    printf "Environment Variables:\n"
+    printf "\tPROTONPREFIX\n"
+    printf "\t\tPath to proton prefix (Default is \$HOME/.proton). STEAM_COMPAT_DATA_PATH have priority\n"
+    printf "\n"
+    printf "\tPL_STEAM_PATH\n"
+    printf "\t\tPath to Steam installation user files (usually \$HOME/.steam/steam). STEAM_COMPAT_CLIENT_INSTALL_PATH have priority\n"
+    printf "\n"
+    printf "\tPL_LIBRARY_PATH\n"
+    printf "\t\tPath to Steam Library folder (Default is \$STEAM_COMPAT_CLIENT_INSTALL_PATH)\n"
+    printf "\n"
+    printf "\tPL_PROTON_VERSION\n"
+    printf "\t\tVersion of proton to use, check out --proton-version-list\n"
+    printf "\n"
 }
 
 
 # Show a version message
-function version() {
+pl_version() {
     echo "ProtonLaunch version ${VERSION}"
-    /usr/bin/env bash --version | head -n 1
     echo "Protonlaunch is licensed under BSD 3-Clause License <https://opensource.org/licenses/BSD-3-Clause>"
 
     echo
@@ -98,146 +107,334 @@ function version() {
 }
 
 
+# Set colors if supported
+pl_set_colors() {
+    pl_debug "detecting terminal color support"
+    ncolors="$(tput colors)"
+    if [ -z "${PL_NO_COLORS}" ] && [ -t 1 ] && [ -n "${ncolors}" ] && [ "$(tput colors)" -ge 8 ]; then
+        pl_debug "colors are enabled"
+        pl_bold="$(tput bold)"
+        export pl_bold
+        pl_underline="$(tput smul)"
+        export pl_underline
+        pl_standout="$(tput smso)"
+        export pl_standout
+        pl_normal="$(tput sgr0)"
+        export pl_normal
+        pl_black="$(tput setaf 0)"
+        export pl_black
+        pl_red="$(tput setaf 1)"
+        export pl_red
+        pl_green="$(tput setaf 2)"
+        export pl_green
+        pl_yellow="$(tput setaf 3)"
+        export pl_yellow
+        pl_blue="$(tput setaf 4)"
+        export pl_blue
+        pl_magenta="$(tput setaf 5)"
+        export pl_magenta
+        pl_cyan="$(tput setaf 6)"
+        export pl_cyan
+        pl_white="$(tput setaf 7)"
+        export pl_white
+    fi
+}
+
+
+# Set legacy support variables
+pl_set_legacy() {
+    pl_debug "setting legacy variables"
+    if [ -n "${_STEAM_PATH}" ]; then
+        #pl_warning "_STEAM_PATH is deprecated, you should use PL_STEAM_PATH"
+        PL_STEAM_PATH="${_STEAM_PATH}"
+        export PL_STEAM_PATH
+    fi
+
+    if [ -n "${_STEAM_LIBRARY_PATH}" ]; then
+        #pl_warning "_STEAM_LIBRARY_PATH is deprecated, you should use PL_LIBRARY_PATH"
+        pl_add_library_path "${_STEAM_LIBRARY_PATH}"
+    fi
+
+    if [ -n "${_PROTON_VERSION}" ]; then
+        #pl_warning "_PROTON_VERSION is deprecated, you should use PL_PROTON_VERSION"
+        PL_PROTON_VERSION="${_PROTON_VERSION}"
+        export PL_PROTON_VERSION
+    fi
+}
+
+
+# Check if a command is available
+pl_cmd_exists() {
+    pl_debug "testing if command '${1}' exists"
+    command -v "${1}" > /dev/null 2>&1
+}
+
+
 # Find Steam installation path
-function get_steam_path() {
-    if [ ! -z ${_STEAM_PATH} ]; then
-        export STEAM_COMPAT_CLIENT_INSTALL_PATH="${_STEAM_PATH}"
-        return
+pl_get_steam_path() {
+    pl_debug "locating steam installation path"
+    if [ -z "${STEAM_COMPAT_CLIENT_INSTALL_PATH}" ]; then
+
+        if [ -n "${PL_STEAM_PATH}" ]; then
+            STEAM_COMPAT_CLIENT_INSTALL_PATH="${PL_STEAM_PATH}"
+
+        elif [ -d "${HOME}/.local/share/Steam" ] && [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
+            STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.local/share/Steam"
+
+        elif [ -d "${HOME}/.steam/debian-installaton" ] && [ -e "${HOME}/.steam/debian-installation/steam.sh" ]; then
+            STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/debian-installation"
+
+        elif [ -h "${HOME}/.steam/steam" ]; then
+            path="$(readlink "${HOME}/.steam/steam")"
+            if [ -e "${path}/steam.sh" ]; then
+                STEAM_COMPAT_CLIENT_INSTALL_PATH="${path}"
+            fi
+
+        elif [ -d "${HOME}/.steam/steam" ] && [ -e "${HOME}/.steam/steam/steam.sh" ]; then
+            STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.steam/steam"
+
+        else
+            pl_error "unable to find Steam path, please set PL_STEAM_PATH"
+        fi
+
+        export STEAM_COMPAT_CLIENT_INSTALL_PATH
+
+    fi
+}
+
+
+# Add a path to the steam library paths
+pl_add_library_path() {
+    pl_debug "adding ${1} to PL_LIBRARY_PATH"
+    if [ -z "${PL_LIBRARY_PATH}" ]; then
+        PL_LIBRARY_PATH="${1}"
+    else
+        PL_LIBRARY_PATH="${PL_LIBRARY_PATH}:${1}"
+    fi
+    export PL_LIBRARY_PATH
+
+}
+
+
+# Find Steam library paths
+pl_get_steam_library() {
+    pl_debug "locating steam library paths"
+    if [ -f "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/config/libraryfolders.vdf" ]; then
+        pl_paths="$(grep -i path "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/config/libraryfolders.vdf" | cut -d '"' -f 4)"
+        for pl_path in ${pl_paths}; do
+            if [ -d "${pl_path}/steamapps/common" ]; then
+                pl_add_library_path "${pl_path}"
+            fi
+        done
     fi
 
-    if [ -e "${HOME}/.local/share/Steam/steam.sh" ]; then
-        export STEAM_COMPAT_CLIENT_INSTALL_PATH="${HOME}/.local/share/Steam"
-        return
-    fi
-
-    if [ -h "${HOME}/.steam/steam" ]; then
-        path="$(readlink ${HOME}/.steam/steam)"
-        if [ -e "${path}/steam.sh" ]; then
-            export STEAM_COMPAT_CLIENT_INSTALL_PATH="${path}"
-            return
+    if [ -z "${PL_LIBRARY_PATH}" ]; then
+        if [ -d "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/steamapps/common" ]; then
+            pl_add_library_path "${STEAM_COMPAT_CLIENT_INSTALL_PATH}"
+        else
+            pl_error "unable to find Steam library, make sure that Proton is installed and set PL_LIBRARY_PATH if necessary"
         fi
     fi
-
-    error "Unable to find Steam path, please set _STEAM_PATH"
 }
 
 
-# Find Steam library path
-function get_steam_library() {
-    if [ -d "${STEAM_COMPAT_CLIENT_INSTALL_PATH}/steamapps/common" ]; then
-        export _STEAM_LIBRARY_PATH="${STEAM_COMPAT_CLIENT_INSTALL_PATH}"
-        return
-    fi
-
-    error "Unable to find Steam library, make sure that Proton is installed and set _STEAM_LIBRARY_PATH if necessary"
-}
-
-
-# Get proton version
-function get_proton_version() {
-    library_path="${_STEAM_LIBRARY_PATH}/steamapps/common"
-    if ! proton_list="$(ls -1r "${library_path}" 2> /dev/null | grep -i proton 2> /dev/null)"; then
-        error "Unable to find Proton on '${_STEAM_LIBRARY_PATH}', make sure proton is installed and set _PROTON_VERSION if necessary"
-    fi
-
-    if [ "$(echo "${proton_list}" | head -n 1)" == "Proton - Experimental" ]; then
-        export _PROTON_VERSION="$(echo "${proton_list}" | head -n 2 | tail -n 1)"
+# Add proton to proton list
+pl_add_proton_list() {
+    pl_debug "adding '${1}' to proton list"
+    if [ -z "${PL_PROTON_LIST}" ]; then
+        PL_PROTON_LIST="${1}"
     else
-        export _PROTON_VERSION="$(echo "${proton_list}" | head -n 1)"
+        PL_PROTON_LIST="${PL_PROTON_LIST}:${1}"
     fi
+    export PL_PROTON_LIST
 }
 
 
-# Get proton exexcutable path
-function get_proton_path() {
-    if [ -e "${_STEAM_LIBRARY_PATH}/steamapps/common/${_PROTON_VERSION}/proton" ]; then
-        export proton="${_STEAM_LIBRARY_PATH}/steamapps/common/${_PROTON_VERSION}/proton"
-        return
-    fi
+# Get all proton versions
+pl_get_proton_list() {
+    pl_debug "locating steam proton installations"
+    old_ifs="${IFS}"
+    IFS=":"
+    for pl_path in ${PL_LIBRARY_PATH}; do
+        library_path="${pl_path}/steamapps/common"
+        for proton in "${library_path}"/*; do
+            if echo "${proton}" | grep -Fqi proton && [ -f "${proton}/proton" ]; then
+                pl_add_proton_list "${proton}"
+            fi
+        done
+    done
+    IFS="${old_ifs}"
+}
 
-    error "Unable to find Proton installation on '${_STEAM_LIBRARY_PATH}/steamapps/common/${_PROTON_VERSION}'"
+
+# Get proton
+pl_get_proton() {
+    pl_debug "getting a usable proton version"
+    old_ifs="${IFS}"
+    IFS=":"
+    for proton in ${PL_PROTON_LIST}; do
+
+        # https://stackoverflow.com/questions/67069192/quick-sorting-a-list-of-files-in-posix-sh
+        # Since it check the whole filepath it isn't fixed yet
+        [ -e "$proton" ] || continue # Order file in lexicogaphical order
+
+        name="$(basename "${proton}")"
+        if [ -z "${PL_PROTON_VERSION}" ]; then
+            if [ "${name}" != "Proton - Experimental" ]; then
+                PL_PROTON_VERSION="${name}"
+                pl_proton_path="${proton}"
+                export pl_proton_path
+                export PL_PROTON_VERSION
+                break
+            fi
+        elif [ "${name}" = "${PL_PROTON_VERSION}" ]; then
+            pl_proton_path="${proton}"
+            export pl_proton_path
+        fi
+    done
+    IFS="${old_ifs}"
+
+    if [ -z "${pl_proton_path}" ]; then
+        if [ -z "${PL_PROTON_VERSION}" ]; then
+            pl_error "no Proton installation found, make sure you've installed Proton trough Steam"
+        else
+            pl_error "Unable to find Proton installation of '${PL_PROTON_VERSION}'"
+        fi
+    fi
 }
 
 
 # Get prefix path
-function get_prefix() {
-    if [ ! -z "${WINEPREFIX}" ]; then
-        export STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
-        return
-    fi
+pl_get_prefix() {
+    pl_debug "locating current prefix"
+    if [ -z "${STEAM_COMPAT_DATA_PATH}" ]; then
+        if [ -n "${PROTONPREFIX}" ]; then
+            STEAM_COMPAT_DATA_PATH="${PROTONPREFIX}"
 
-    if [ ! -z "${PROTONPREFIX}" ]; then
-        export STEAM_COMPAT_DATA_PATH="${PROTONPREFIX}"
-        return
-    fi
+        elif [ -n "${WINEPREFIX}" ]; then
+            pl_warning "is not recommended to use WINEPREFIX. Use PROTONPREFIX instead"
+            STEAM_COMPAT_DATA_PATH="${WINEPREFIX}"
 
-    export STEAM_COMPAT_DATA_PATH="${HOME}/.proton"
+        else
+            pl_debug "no variable located, ${HOME}/.proton will be"
+            STEAM_COMPAT_DATA_PATH="${HOME}/.proton"
+        fi
+
+        export STEAM_COMPAT_DATA_PATH
+    fi
 }
 
 
 # Bootstrap prefix
-function bootstrap() {
+pl_bootstrap() {
     if [ ! -d "${1}/pfx/drive_c" ]; then
-        info "Bootstrapping '${1}'"
-        "${proton}" run wineboot
+        pl_info "bootstrapping '${1}'"
+        "${pl_proton}" run wineboot
     fi
 }
+
 
 # Run a program
-function run() {
-    command="${1}"
+pl_run() {
+    pl_command="${1}"
     shift
-    params=${@}
-    info "Program is '${command}'"
+    pl_params=${*}
+    pl_info "Program is '${pl_command}'"
 
-    if [ -z "${params}" ]; then
-        "${proton}" run "${command}"
+    if [ -z "${pl_params}" ]; then
+        pl_debug "using 'run' since theres no parameters"
+        pl_debug "Running: \"${pl_proton}\" run \"${pl_command}\""
+        "${pl_proton}" run "${pl_command}"
     else
-        "${proton}" runinprefix "${command}" ${params}
+        pl_debug "using 'runinprefix' since there is paramenters"
+        pl_debug "Running: \"${pl_proton}\" runinprefix \"${pl_command}\" ${pl_params}"
+        "${pl_proton}" runinprefix "${pl_command}" "${pl_params}"
     fi
 }
 
 
+# Print a list of proton versions
+pl_proton_version_list() {
+    if [ "${PL_PROTON_VERSION_LIST}" = "1" ]; then
+        old_ifs="${IFS}"
+        IFS=":"
+        for pl_path in ${PL_PROTON_LIST}; do
+            basename "${pl_path}"
+        done
+        IFS="${old_ifs}"
+        exit 0
+    fi
+}
+
 # Manage launch options
-if [ -z "${1}" ]; then
-    error "Expecting a program name or aregument, try --help"
+while [ -n "${1}" ] && echo "${1}" | grep -Fq -- "--"; do
+    case ${1} in
+        "--help")
+            pl_usage
+            exit 0
+        ;;
+        "--version")
+            pl_version
+            exit 0
+        ;;
+        "--steam-path")
+            STEAM_COMPAT_CLIENT_INSTALL_PATH="${2}"
+            shift 2
+        ;;
+        "--proton-version")
+            PL_PROTON_VERSION="${2}"
+            shift 2
+        ;;
+        "--proton-version-list")
+            PL_PROTON_VERSION_LIST=1
+            shift
+        ;;
+        "--quiet")
+            PL_QUIET=1
+            shift
+        ;;
+        "--debug")
+            PL_DEBUG=1
+            shift
+        ;;
+        *)
+            pl_error "${1} is not a valid argument, try ${PROGRAM_NAME} --help"
+        ;;
+    esac
+done
+
+if [ -z "${1}" ] && [ -z "${PL_PROTON_VERSION_LIST}" ]; then
+    pl_error "Expecting a program name or aregument, try --help"
 fi
 
-case ${1} in
-    "-h") usage; exit 0;;
-    "--help") usage; exit 0;;
-    "-v") version; exit 0;;
-    "--version") version; exit 0;;
-esac
+# Set colors and legacy environment variables
+pl_set_colors
+pl_set_legacy
 
 # Get variables
-if [ -z ${STEAM_COMPAT_CLIENT_INSTALL_PATH} ]; then
-    get_steam_path
-fi
-info "Steam installation path is '${STEAM_COMPAT_CLIENT_INSTALL_PATH}'"
+pl_get_steam_path
+pl_info "steam installation path is '${STEAM_COMPAT_CLIENT_INSTALL_PATH}'"
 
-if [ -z ${_STEAM_LIBRARY_PATH} ]; then
-    get_steam_library
-fi
-info "Steam library path is '${_STEAM_LIBRARY_PATH}'"
+pl_get_steam_library
+pl_debug "steam library path found: ${PL_LIBRARY_PATH}"
 
-if [ -z "${_PROTON_VERSION}" ]; then
-    get_proton_version
-fi
-info "Proton version '${_PROTON_VERSION}'"
+pl_get_proton_list
+pl_proton_version_list
 
-get_proton_path
+pl_get_proton
+pl_info "proton version '${PL_PROTON_VERSION}'"
+pl_proton="${pl_proton_path}/proton"
 
-get_prefix
-info "Prefix '${STEAM_COMPAT_DATA_PATH}'"
+pl_get_prefix
+pl_info "prefix '${STEAM_COMPAT_DATA_PATH}'"
 
 # Create and bootstrap prefix
 if ! mkdir -pv "${STEAM_COMPAT_DATA_PATH}"; then
-    error "Failed to create prefix '${STEAM_COMPAT_DATA_PATH}'"
+    pl_error "failed to create prefix '${STEAM_COMPAT_DATA_PATH}'"
 fi
-if ! bootstrap "${STEAM_COMPAT_DATA_PATH}"; then
-    error "Failed to bootstrap '${STEAM_COMPAT_DATA_PATH}'"
+if ! pl_bootstrap "${STEAM_COMPAT_DATA_PATH}"; then
+    pl_error "failed to bootstrap '${STEAM_COMPAT_DATA_PATH}'"
 fi
 
 # Run proton
-run "${@}"
+pl_run "${@}"
