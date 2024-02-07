@@ -1,6 +1,6 @@
 # Maintainer: Artur 'h0m3' Paiva <dr.hoome@gmail.com>
 pkgname="protonlaunch"
-pkgver="0.6"
+pkgver="0.9"
 pkgrel=1
 pkgdesc="A small piece of script to launch Proton directly from the CLI, similar to Wine"
 arch=('any')

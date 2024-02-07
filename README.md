@@ -46,7 +46,7 @@ curl -O https://raw.githubusercontent.com/h0m3/protonlaunch/main/protonlaunch; s
 
 ## You're done
 
-Now just test it, if you have a standard Steam / Proton installation, it should work by just typing `protonlaunch winecfg` in your terminal.
+Now just test it, if you have a standard Steam / Proton installation, it should work by just typing `protonlaunch winecfg` in your terminal. If you want to know where to go next follow the [getting started guide](https://github.com/h0m3/protonlaunch/wiki/Getting-Started).
 
 # Manual installation
 

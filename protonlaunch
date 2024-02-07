@@ -33,7 +33,7 @@
 
 
 # Version string
-VERSION="0.9"
+VERSION="0.10"
 
 # Get program name
 PROGRAM_NAME="$(basename "${0}")"
@@ -42,20 +42,20 @@ PROGRAM_NAME="$(basename "${0}")"
 # Show message logs
 pl_info() {
     if [ -z "${PL_QUIET}" ] || [ "${PL_QUIET}" = "0" ]; then
-        echo "${pl_bold}${pl_blue}${PROGRAM_NAME}:${pl_normal} ${1}" > /dev/stdout
+        echo "${pl_bold}${pl_blue}${PROGRAM_NAME}:${pl_normal} ${1}" >&1
     fi
 }
 
 
 # Show a warning message
 pl_warning() {
-    echo "${pl_bold}${pl_yellow}${PROGRAM_NAME}:${pl_normal} warning: ${1}" > /dev/stdout
+    echo "${pl_bold}${pl_yellow}${PROGRAM_NAME}:${pl_normal} warning: ${1}" >&1
 }
 
 
 # Raise an error and terminate the application
 pl_error() {
-    echo "${pl_bold}${pl_red}${PROGRAM_NAME}:${pl_normal} error: ${1}" > /dev/stderr
+    echo "${pl_bold}${pl_red}${PROGRAM_NAME}:${pl_normal} error: ${1}" >&2
     exit 1
 }
 
@@ -63,7 +63,7 @@ pl_error() {
 # Show debug messages
 pl_debug() {
     if [ "${PL_DEBUG}" = "1" ]; then
-        echo "${pl_normal}${PROGRAM_NAME}: debug: ${1}" > /dev/stdout
+        echo "${pl_normal}${PROGRAM_NAME}: debug: ${1}" >&1
     fi
 }
 
